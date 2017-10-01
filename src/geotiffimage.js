@@ -7,6 +7,8 @@ var LZWDecoder = require("./compression/lzw.js");
 var DeflateDecoder = require("./compression/deflate.js");
 var PackbitsDecoder = require("./compression/packbits.js");
 
+const nbit = require("../node_modules/nbit/build/index.js");
+var getUint2 = nbit.getUint2;
 
 var sum = function(array, start, end) {
   var s = 0;
@@ -20,6 +22,8 @@ var arrayForType = function(format, bitsPerSample, size) {
   switch (format) {
     case 1: // unsigned integer data
       switch (bitsPerSample) {
+        case 2:
+          return new Uint8Array(size);
         case 8:
           return new Uint8Array(size);
         case 16:
@@ -155,7 +159,7 @@ GeoTIFFImage.prototype = {
     var bitsPerSample = 0;
     for (var i = 0; i < this.fileDirectory.BitsPerSample.length; ++i) {
       var bits = this.fileDirectory.BitsPerSample[i];
-      if ((bits % 8) !== 0) {
+      if ((bits % 8) !== 0 && bits !== 2) {
         throw new Error("Sample bit-width of " + bits + " is not supported.");
       }
       else if (bits !== this.fileDirectory.BitsPerSample[0]) {
@@ -171,18 +175,23 @@ GeoTIFFImage.prototype = {
       throw new RangeError("Sample index " + i + " is out of range.");
     }
     var bits = this.fileDirectory.BitsPerSample[i];
-    if ((bits % 8) !== 0) {
+    if ((bits % 8) !== 0 && bits !== 2) {
       throw new Error("Sample bit-width of " + bits + " is not supported.");
     }
     return (bits / 8);
   },
 
   getReaderForSample: function(sampleIndex) {
+    console.log("starting getReaderForSample with ", sampleIndex);
     var format = this.fileDirectory.SampleFormat ? this.fileDirectory.SampleFormat[sampleIndex] : 1;
     var bitsPerSample = this.fileDirectory.BitsPerSample[sampleIndex];
+    console.log("bitsPerSample:", bitsPerSample);
+    console.log("format:", format);
     switch (format) {
       case 1: // unsigned integer data
         switch (bitsPerSample) {
+          case 2:
+            return getUint2;
           case 8:
             return DataView.prototype.getUint8;
           case 16:
@@ -249,15 +258,22 @@ GeoTIFFImage.prototype = {
     }
     else {
       var offset, byteCount;
+      console.log("isTiled:", this.isTiled);
       if (this.isTiled) {
         offset = this.fileDirectory.TileOffsets[index];
         byteCount = this.fileDirectory.TileByteCounts[index];
       }
       else {
+        console.log("this.fileDirectory.StripOffsets:", this.fileDirectory.StripOffsets);
         offset = this.fileDirectory.StripOffsets[index];
+        console.log("this.fileDirectory.StripByteCounts:", this.fileDirectory.StripByteCounts);
         byteCount = this.fileDirectory.StripByteCounts[index];
       }
+      console.error("offset:", offset);
+      console.error("byteCount:", byteCount);
+      console.error("offset + byteCount:", offset + byteCount);
       var slice = this.dataView.buffer.slice(offset, offset + byteCount);
+      console.log("slice:", slice);
       if (callback) {
         return this.getDecoder().decodeBlockAsync(slice, function(error, data) {
           if (!error && tiles !== null) {
@@ -266,7 +282,9 @@ GeoTIFFImage.prototype = {
           callback(error, {x: x, y: y, sample: sample, data: data});
         });
       }
+      console.log("decoder:", this.getDecoder());
       var block = this.getDecoder().decodeBlock(slice);
+      console.log("block:", block);
       if (tiles !== null) {
         tiles[index] = block;
       }
@@ -275,6 +293,7 @@ GeoTIFFImage.prototype = {
   },
 
   _readRasterAsync: function(imageWindow, samples, valueArrays, interleave, callback, callbackError) {
+    console.log("valueArrays:", valueArrays);
     var tileWidth = this.getTileWidth();
     var tileHeight = this.getTileHeight();
 
@@ -289,6 +308,7 @@ GeoTIFFImage.prototype = {
     var windowHeight = imageWindow[3] - imageWindow[1];
 
     var bytesPerPixel = this.getBytesPerPixel();
+    //console.log("bytesPerPixel:", bytesPerPixel);
     var imageWidth = this.getWidth();
 
     var predictor = this.fileDirectory.Predictor || 1;
@@ -394,8 +414,10 @@ GeoTIFFImage.prototype = {
   },
 
   _readRaster: function(imageWindow, samples, valueArrays, interleave, callback, callbackError) {
+    console.log("starting _readRaster");
     try {
       var tileWidth = this.getTileWidth();
+      console.log("tileWidth:", tileWidth);
       var tileHeight = this.getTileHeight();
 
       var minXTile = Math.floor(imageWindow[0] / tileWidth);
@@ -403,18 +425,24 @@ GeoTIFFImage.prototype = {
       var minYTile = Math.floor(imageWindow[1] / tileHeight);
       var maxYTile = Math.ceil(imageWindow[3] / tileHeight);
 
+      console.log("this.getWidth():", this.getWidth());
       var numTilesPerRow = Math.ceil(this.getWidth() / tileWidth);
+      console.log("numTilesPerRow:", numTilesPerRow);
 
       var windowWidth = imageWindow[2] - imageWindow[0];
       var windowHeight = imageWindow[3] - imageWindow[1];
+      console.log("windowHeight:", windowHeight);      
 
       var bytesPerPixel = this.getBytesPerPixel();
+      console.log("bytesPerPixel:", bytesPerPixel);
       var imageWidth = this.getWidth();
 
       var predictor = this.fileDirectory.Predictor || 1;
+      console.log("predictor:", predictor);
 
       var srcSampleOffsets = [];
       var sampleReaders = [];
+      //console.log("samples:", samples);
       for (var i = 0; i < samples.length; ++i) {
         if (this.planarConfiguration === 1) {
           srcSampleOffsets.push(sum(this.fileDirectory.BitsPerSample, 0, samples[i]) / 8);
@@ -422,8 +450,10 @@ GeoTIFFImage.prototype = {
         else {
           srcSampleOffsets.push(0);
         }
+        //console.log("set srcSampleOffsets");
         sampleReaders.push(this.getReaderForSample(samples[i]));
       }
+      console.log("sampleReaders:", sampleReaders);
 
       for (var yTile = minYTile; yTile < maxYTile; ++yTile) {
         for (var xTile = minXTile; xTile < maxXTile; ++xTile) {
@@ -434,10 +464,17 @@ GeoTIFFImage.prototype = {
 
           for (var sampleIndex = 0; sampleIndex < samples.length; ++sampleIndex) {
             var sample = samples[sampleIndex];
+            console.log("sample:", sample);
+            console.log("this.planarConfiguration:", this.planarConfiguration);
             if (this.planarConfiguration === 2) {
               bytesPerPixel = this.getSampleByteSize(sample);
             }
+            console.log("sample:", sample);
+            console.log("xTile:", xTile);
+            console.log("yTile:", yTile);
             var tile = new DataView(this.getTileOrStrip(xTile, yTile, sample));
+            console.log("tile:", tile);
+            console.log("tile values:", new Uint8Array(tile.buffer));
 
             var reader = sampleReaders[sampleIndex];
             var ymax = Math.min(tileHeight, tileHeight - (lastLine - imageWindow[3]));
@@ -450,9 +487,20 @@ GeoTIFFImage.prototype = {
             for (var y = Math.max(0, imageWindow[1] - firstLine); y < ymax; ++y) {
               for (var x = Math.max(0, imageWindow[0] - firstCol); x < xmax; ++x) {
                 var pixelOffset = (y * tileWidth + x) * bytesPerPixel;
+                //console.log("\n\n\npixelOffset:", pixelOffset);
                 var value = 0;
+                //console.log("tileLength-1", tileLength-1);
                 if (pixelOffset < tileLength-1) {
-                  value = reader.call(tile, pixelOffset + srcSampleOffsets[sampleIndex], this.littleEndian);
+                  try {
+                      //console.log("calling reader:");
+                      value = reader.call(tile, pixelOffset + srcSampleOffsets[sampleIndex], this.littleEndian);
+                      //console.log("value:", value);
+                  } catch (error) {
+                      //console.log("tile:", tile);
+                      //console.log("reader:", reader);
+                      //console.log("offset:", pixelOffset + srcSampleOffsets[sampleIndex]);
+                      console.error("failed running reader.call, which is ", reader.call,"because", error);
+                  }
                 }
 
                 var windowCoordinate;
@@ -472,6 +520,7 @@ GeoTIFFImage.prototype = {
                   valueArrays[windowCoordinate] = value;
                 }
                 else {
+                  //console.log("else value:", value);
                   if (predictor !== 1 && x > 0) {
                     windowCoordinate = (
                       y + firstLine - imageWindow[1]
@@ -614,9 +663,11 @@ GeoTIFFImage.prototype = {
     else {
       valueArrays = [];
       for (i = 0; i < samples.length; ++i) {
+        console.log("numPixels:", numPixels);
         valueArrays.push(this.getArrayForSample(samples[i], numPixels));
       }
     }
+    console.log("valueArrays:", valueArrays);
 
     // start reading data, sync or async
     var decoder = this.getDecoder();
@@ -630,6 +681,9 @@ GeoTIFFImage.prototype = {
     }
     else {
       callback = callback || function() {};
+      console.log("calling this._readRaster next");
+      console.log("imageWindow:", imageWindow);
+      console.log("samples:", samples);
       return this._readRaster(
         imageWindow, samples, valueArrays, interleave, callback, callbackError
       );

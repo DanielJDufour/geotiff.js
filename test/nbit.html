@@ -1,0 +1,30 @@
+<html>
+<head>
+
+</head>
+<body>
+    <h1>TESTING nbit</h1>
+<script src="../dist/geotiff.browserify.js"></script>
+
+<script>
+  ["2", "32"].forEach(n => {
+    fetch("http://dev.firstdraftgis.com:8080/test/data/uint" + n + ".tiff").then(r => r.arrayBuffer())
+    .then(ab => {
+      try {
+        console.log("ab:", ab);
+        gt = GeoTIFF.parse(ab);
+        im = gt.getImage();
+        values = im.readRasters();
+        console.log("values:", values);
+      } catch (error) {
+        console.log("error:", error);
+      }
+    });
+  });
+</script>
+
+
+
+</script>
+</body>
+</html>

@@ -32,3 +32,6 @@ rgb2pct.py rgb.tiff rgb_paletted.tiff
 convert rgb.tiff -colorspace YCbCr ycbcr.tif
 convert rgb.tiff -colorspace CMYK cmyk.tif
 convert rgb.tiff -colorspace Lab cielab.tif
+
+# create 2-bit unsigned integer
+gdal_translate -of GTiff -ot Byte -co NBITS=2 -scale 0 255 0 3 rgb_paletted.tiff uint2.tiff

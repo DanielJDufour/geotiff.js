@@ -10,6 +10,7 @@ var retrieve = function(filename, done, callback) {
   xhr.open('GET', '/base/test/data/' + filename, true);
   xhr.responseType = 'arraybuffer';
   xhr.onload = function(e) {
+    console.log("onload");
     callback(GeoTIFF.parse(this.response));
   };
   xhr.onerror = function(e) {
@@ -18,6 +19,7 @@ var retrieve = function(filename, done, callback) {
   };
   callback;
   xhr.send();
+  console.log("sent");
 };
 
 var retrieveSync = function(filename, done, callback) {
@@ -34,7 +36,7 @@ var retrieveSync = function(filename, done, callback) {
   callback;
   xhr.send();
 };
-
+/*
 describe("mainTests", function() {
   it("geotiff.js module available", function() {
     expect(GeoTIFF).to.be.ok;
@@ -466,6 +468,52 @@ describe("RGB-tests", function() {
           done();
         }, done);
       }, done);
+    });
+  });
+});
+*/
+
+
+describe("UintNTests", function() {
+  it("should work on UInt2 tiffs", function(done) {
+    console.log("retrieving");
+    retrieve("uint2.tiff", done, function(tiff) {
+      console.log("tiff:", tiff);
+      expect(tiff).to.be.ok;
+      var image = tiff.getImage();
+      expect(image).to.be.ok;
+      expect(image.getWidth()).to.equal(541);
+      console.log("passed width");
+      expect(image.getHeight()).to.equal(449);
+      console.log("passed height");
+      expect(image.fileDirectory.BitsPerSample[0]).to.equal(2);
+      console.log("passed bitsPerSample");
+
+      try {
+        var allData = image.readRasters();
+        expect(allData).to.have.length(1);
+        console.log("passed rasters length");
+        var values = allData[0];
+        expect(values).to.be.an.instanceof(Uint8Array);
+        console.log("values:", values);
+        var expected_values = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+        var expected_values_as_string = expected_values.join(",");
+        console.log("expected_values:", expected_values);
+        var number_of_values = expected_values.length;
+        var values_as_string = values[0];
+        for (var i = 1; i < values.length; i++) {
+            values_as_string += "," + values[i];
+        }
+        console.log("values_as_string:", values_as_string);
+        console.log("expected_values_as_string:", expected_values_as_string);
+        expect(values_as_string).to.equal(expected_values_as_string);
+        expect(values).to.have.length(4);
+        done();
+      }
+      catch (error) {
+        console.log("ERROR:", error);
+        done(error);
+      }
     });
   });
 });

@@ -13,6 +13,7 @@
   "dependencies": {
     "babel-cli": "^6.24.0",
     "grunt-cli": "^1.2.0",
+    "nbit": "0.0.4",
     "pako": "^1.0.3",
     "xmldom": "0.1.*"
   },
@@ -22,6 +23,7 @@
     "babelify": "^7.3.0",
     "chai": "^3.5.0",
     "es6-promise": "^4.0.5",
+    "gdal": "^0.9.6",
     "grunt": "^1.0.1",
     "grunt-autoprefixer": "^3.0.4",
     "grunt-browserify": "^5.0.0",
