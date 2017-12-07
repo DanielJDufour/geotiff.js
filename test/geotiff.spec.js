@@ -3,6 +3,8 @@ var expect = chai.expect;
 
 var Promise = require('es6-promise').Promise;
 
+var _ = require("underscore");
+
 import GeoTIFF from "../src/main.js"
 
 var retrieve = function(filename, done, callback) {
@@ -473,47 +475,71 @@ describe("RGB-tests", function() {
 });
 */
 
+function toArray(typedArray) {
+    let newArray = [];
+    for (let i = 0; i < typedArray.length; i++) {
+        newArray.push(typedArray[i]);
+    }
+    return newArray;
+}
 
 describe("UintNTests", function() {
   it("should work on UInt2 tiffs", function(done) {
     console.log("retrieving");
-    retrieve("uint2.tiff", done, function(tiff) {
-      console.log("tiff:", tiff);
-      expect(tiff).to.be.ok;
-      var image = tiff.getImage();
-      expect(image).to.be.ok;
-      expect(image.getWidth()).to.equal(541);
-      console.log("passed width");
-      expect(image.getHeight()).to.equal(449);
-      console.log("passed height");
-      expect(image.fileDirectory.BitsPerSample[0]).to.equal(2);
-      console.log("passed bitsPerSample");
 
-      try {
-        var allData = image.readRasters();
-        expect(allData).to.have.length(1);
-        console.log("passed rasters length");
-        var values = allData[0];
-        expect(values).to.be.an.instanceof(Uint8Array);
-        console.log("values:", values);
-        var expected_values = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-        var expected_values_as_string = expected_values.join(",");
-        console.log("expected_values:", expected_values);
-        var number_of_values = expected_values.length;
-        var values_as_string = values[0];
-        for (var i = 1; i < values.length; i++) {
-            values_as_string += "," + values[i];
+    /* Load the 2-Bit Unsigned Integer Raster */
+    retrieve("uint2.tiff", done, function(newTiff) {
+
+      /*
+        Load the RGB 8-Bit Raster that the 2-Bit Raster was
+        created from with gdal_translate's scaling capability
+      */
+      retrieve("rgb_paletted.tiff", null, function(oldTiff) {
+
+        expect(newTiff).to.be.ok;
+        expect(oldTiff).to.be.ok;
+
+        var newImage = newTiff.getImage();
+        var oldImage = oldTiff.getImage();
+        expect(newImage).to.be.ok;
+        expect(oldImage).to.be.ok;
+
+        let actualWidth = newImage.getWidth();
+        let actualHeight = newImage.getHeight();
+        expect(actualWidth).to.equal(oldImage.getWidth());
+        expect(actualHeight).to.equal(oldImage.getHeight());
+        expect(newImage.fileDirectory.BitsPerSample[0]).to.equal(2);
+
+        var allData = newImage.readRasters();
+        expect(allData).to.have.length(1); // one band
+
+        var actualValues = allData[0];
+
+        /* The number of cells should match
+           the number of rows times the number
+           of columns in the raster
+        */
+        expect(actualValues).to.have.length(actualWidth * actualHeight);
+
+        expect(actualValues).to.be.an.instanceof(Uint8Array);
+
+        let actualValuesAsArray = toArray(actualValues);
+        let expectedValuesAsArray = toArray(oldImage.readRasters()[0]).map(function(value) {
+            return Math.round(value / 255 * 3);
+        });
+
+        let actualCounts = _.countBy(actualValuesAsArray);
+        let expectedCounts = _.countBy(expectedValuesAsArray);
+
+        console.log("actualCounts:", actualCounts);
+        console.log("expectedCounts:", expectedCounts);
+
+        for (let key in actualCounts) {
+            expect( Math.abs(actualCounts[key] - expectedCounts[key]) / expectedCounts[key] ).to.be.below(0.12);
         }
-        console.log("values_as_string:", values_as_string);
-        console.log("expected_values_as_string:", expected_values_as_string);
-        expect(values_as_string).to.equal(expected_values_as_string);
-        expect(values).to.have.length(4);
+
         done();
-      }
-      catch (error) {
-        console.log("ERROR:", error);
-        done(error);
-      }
-    });
+      });
+   });
   });
 });

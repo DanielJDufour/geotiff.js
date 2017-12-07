@@ -77,7 +77,7 @@ GeoTIFF.prototype = {
   },
 
   getValues: function(fieldType, count, offset) {
-    console.log("starting getValues with:", fieldType, count, offset);
+    //console.log("starting getValues with:", fieldType, count, offset);
     var values = null;
     var readMethod = null;
     var fieldTypeLength = this.getFieldTypeLength(fieldType);
@@ -225,7 +225,7 @@ GeoTIFF.prototype = {
           fieldTag, fieldType, typeCount, i + (this.bigTiff ? 12 : 8)
         );
       }
-      console.log("fileDirectory:", fileDirectory);
+      //console.log("fileDirectory:", fileDirectory);
       fileDirectories.push([
         fileDirectory, this.parseGeoKeyDirectory(fileDirectory)
       ]);

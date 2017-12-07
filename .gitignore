@@ -2,4 +2,6 @@ node_modules
 dist/
 
 # swap files
-*swp
+*.sw*
+
+package-lock.json
