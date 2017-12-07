@@ -38,7 +38,7 @@ var retrieveSync = function(filename, done, callback) {
   callback;
   xhr.send();
 };
-/*
+
 describe("mainTests", function() {
   it("geotiff.js module available", function() {
     expect(GeoTIFF).to.be.ok;
@@ -473,7 +473,6 @@ describe("RGB-tests", function() {
     });
   });
 });
-*/
 
 function toArray(typedArray) {
     let newArray = [];
