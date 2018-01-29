@@ -510,7 +510,7 @@ describe("writeTests", function() {
       "ModelPixelScale": [0.031355, 0.031355],
       "ModelTiepoint": [0, 0, 0, 11.331755000000001, 46.268645, 0],
       "GeoKeyDirectory": [1, 1, 0, 5, 1024, 0, 1, 2, 1025, 0, 1, 1, 2048, 0, 1, 4326, 2049, 34737, 7, 0, 2054, 0, 1, 9102],
-      "GeoAsciiParams": "WGS 84|\u0000",
+      "GeoAsciiParams": "WGS 84",
       "GTModelTypeGeoKey": 2,
       "GTRasterTypeGeoKey": 1,
       "GeographicTypeGeoKey": 4326,
@@ -525,7 +525,7 @@ describe("writeTests", function() {
     console.log("fd:", fd);
     //expect(fd.BitsPerSample).to.equal([8]);
     expect(fd.Compression).to.equal(1);
-    expect(fd.GeoAsciiParams).to.equal("WGS 84|\u0000");
+    expect(fd.GeoAsciiParams).to.equal("WGS 84\u0000");
     //expect(fd.ImageHeight).to.equal(3);
     //expect(fd.ImageWidth).to.equal(3);
     //expect(JSON.stringify(map(fd.ModelPixelScale))).to.equal(JSON.stringify([0.031355, 0.031355]));

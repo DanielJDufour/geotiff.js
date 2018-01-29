@@ -30,6 +30,7 @@ var _binBE = {
 	    buff[p+3] = (n>>0)&255;
 	},
 	writeASCII: function(buff, p, s) {
+		console.log("starting writeASCII with", p, s);
 		times(s.length, function(i){ buff[p+i] = s.charCodeAt(i); });
     },
 	ui8: new Uint8Array(8)
@@ -64,9 +65,12 @@ var _writeIFD = function(bin, data, offset, ifd) {
 		}
 		
 		var val = ifd[key];
-		
+
+		// ASCIIZ format with trailing 0 character
+		// http://www.fileformat.info/format/tiff/corion.htm
+		// https://stackoverflow.com/questions/7783044/whats-the-difference-between-asciiz-vs-ascii
 		if (typeName === "ASCII") {
-		    val = val[0] + "\u0000";
+		    val += "\u0000";
 		}
 		
 		var num = val.length;
@@ -89,6 +93,9 @@ var _writeIFD = function(bin, data, offset, ifd) {
 		}
 
 		if(typeName === "ASCII") {
+			console.log("dlen:", dlen);
+			console.log("toff:", toff);
+			console.log("val:", val);
 		    bin.writeASCII(data, toff, val);
 		} else if(typeName === "SHORT") {
 		    times(num, function(i){
