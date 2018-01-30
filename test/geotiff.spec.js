@@ -1,7 +1,7 @@
 var chai = require("chai");
 var expect = chai.expect;
 
-import { map } from "lodash";
+import { flattenDeep, map } from "lodash";
 
 var Promise = require('es6-promise').Promise;
 
@@ -489,7 +489,7 @@ describe("writeTests", function() {
   it("geotiff.js should write simple tiffs correctly", function() {
     var values = [
       [
-        [1, 2, 3],
+        [51, 2, 3],
         [4, 5, 6],
         [7, 8, 9]
       ]
@@ -503,12 +503,12 @@ describe("writeTests", function() {
       "PhotometricInterpretation": 2,
       "StripOffsets": [1054],
       "SamplesPerPixel": 1,
-      "RowsPerStrip": 3,
+      "RowsPerStrip": [3],
       "StripByteCounts": [9],
       "PlanarConfiguration": 1,
       "SampleFormat": [1],
-      "ModelPixelScale": [0.031355, 0.031355],
-      "ModelTiepoint": [0, 0, 0, 11.331755000000001, 46.268645, 0],
+      "ModelPixelScale": [0.031355, 0.031355, 0],
+      //"ModelTiepoint": [0, 0, 0, 11.331755000000001, 46.268645, 0],
       "GeoKeyDirectory": [1, 1, 0, 5, 1024, 0, 1, 2, 1025, 0, 1, 1, 2048, 0, 1, 4326, 2049, 34737, 7, 0, 2054, 0, 1, 9102],
       "GeoAsciiParams": "WGS 84",
       "GTModelTypeGeoKey": 2,
@@ -523,20 +523,27 @@ describe("writeTests", function() {
     console.log("parsed:", parsed);
     var fd = parsed.fileDirectories[0][0];
     console.log("fd:", fd);
-    //expect(fd.BitsPerSample).to.equal([8]);
+    expect(stringify(fd.BitsPerSample)).to.equal(stringify([8]));
     expect(fd.Compression).to.equal(1);
     expect(fd.GeoAsciiParams).to.equal("WGS 84\u0000");
-    //expect(fd.ImageHeight).to.equal(3);
-    //expect(fd.ImageWidth).to.equal(3);
-    //expect(JSON.stringify(map(fd.ModelPixelScale))).to.equal(JSON.stringify([0.031355, 0.031355]));
-    //expect(fd.ModelTiepoint).to.equal([0, 0, 0, 11.331755000000001, 46.268645, 0]);
+    expect(fd.ImageLength).to.equal(3);
+    expect(fd.ImageWidth).to.equal(3);
+    //expect(stringify(fd.ModelPixelScale)).to.equal(stringify(metadata.ModelPixelScale));
+    //expect(stringify(fd.ModelTiepoint)).to.equal(stringify(metadata.ModelTiepoint));
     expect(fd.PhotometricInterpretation).to.equal(2);
     expect(fd.PlanarConfiguration).to.equal(1);
-    //expect(fd.StripOffsets).to.equal([1054]);
+    expect(stringify(fd.StripOffsets)).to.equal("[2000]"); //hardcoded at 2000 now rather than calculated
     expect(stringify(fd.SampleFormat)).to.equal(stringify([1]));
     expect(fd.SamplesPerPixel).to.equal(1);
-    //expect(fd.RowsPerStrip).to.equal(3);
-    //expect(fd.StripByteCounts).to.equal(3);
+    expect(stringify(fd.RowsPerStrip)).to.equal("3");
+    expect(stringify(fd.StripByteCounts)).to.equal(stringify((metadata.StripByteCounts)));
+    
+    let image = parsed.getImage();
+    console.log("image:", image);
+    let rasters = image.readRasters();
+    console.log("rasters:", rasters);
+    let raster = rasters[0];
+    expect(stringify(raster)).to.equal(stringify(flattenDeep(values)));
     
 
   });

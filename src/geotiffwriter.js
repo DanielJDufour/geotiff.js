@@ -2,7 +2,7 @@
 //!!!!! If strip definition tags are omitted, the image is assumed to contain a single strip.
 var globals = require("./globals.js");
 
-import { assign, forEach, invert, times } from "lodash"; 
+import { assign, endsWith, isUndefined, forEach, invert, times } from "lodash"; 
 
 var code2typeName = globals.fieldTagTypes;
 var tagName2Code = invert(globals.fieldTagNames);
@@ -31,21 +31,32 @@ var _binBE = {
 	},
 	writeASCII: function(buff, p, s) {
 		console.log("starting writeASCII with", p, s);
-		times(s.length, function(i){ buff[p+i] = s.charCodeAt(i); });
+		times(s.length, function(i){
+			buff[p+i] = s.charCodeAt(i);
+		});
     },
 	ui8: new Uint8Array(8)
 };
-var ui8buffer = _binBE.ui8.buffer;
-_binBE.i16 = new Int16Array(ui8buffer);
-_binBE.i32 = new Int32Array(ui8buffer);
-_binBE.ui32 = new Uint32Array(ui8buffer);
-_binBE.fl32 = new Float32Array(ui8buffer);
-_binBE.fl64 = new Float64Array(ui8buffer);
+_binBE.fl64 = new Float64Array(_binBE.ui8.buffer);
+_binBE.writeDouble = function(buff, p, n) {
+	console.log("starting writeDouble");
+	//console.log("buff:", buff);
+	console.log("[wd] p:", p);
+	console.log("[wd] n:", n);	
+	_binBE.fl64[0] = n;
+	times(8, function(i){
+		buff[p + i] = _binBE.ui8[7 - i];
+	});
+};
+
+
 
 var _writeIFD = function(bin, data, offset, ifd) {
     
-	var keys = Object.keys(ifd);
-	//console.log("keys:", keys);
+	var keys = Object.keys(ifd).filter(function(key) {
+		return key !== undefined && key !== null && key !== "undefined";
+	});
+	console.log("keys:", keys);
 	
 	bin.writeUshort(data, offset, keys.length);
 	offset += 2;
@@ -53,6 +64,7 @@ var _writeIFD = function(bin, data, offset, ifd) {
 	var eoff = offset + 12 * keys.length + 4;
 
     keys.forEach(function(key) {
+    	
 		var tag = typeof key === "number" ? key : typeof key === "string" ? parseInt(key) : null;
 		
 		var typeName = code2typeName[tag];
@@ -61,15 +73,17 @@ var _writeIFD = function(bin, data, offset, ifd) {
 		//console.log("typeNum:", typeNum);
 		
 		if (typeName == null || typeName === undefined || typeof typeName === "undefined") {
+			console.log("key:", key);
 		    throw "unknown type of tag: " + tag;
 		}
 		
 		var val = ifd[key];
+		console.log("val:", val);
 
 		// ASCIIZ format with trailing 0 character
 		// http://www.fileformat.info/format/tiff/corion.htm
 		// https://stackoverflow.com/questions/7783044/whats-the-difference-between-asciiz-vs-ascii
-		if (typeName === "ASCII") {
+		if (typeName === "ASCII" && typeof val === "string" && endsWith(val, "\u0000") === false) {
 		    val += "\u0000";
 		}
 		
@@ -110,10 +124,20 @@ var _writeIFD = function(bin, data, offset, ifd) {
 		        bin.writeUint(data, toff + 8 * i, Math.round(val[i]*10000));
 		        bin.writeUint(data, toff + 8 * i + 4, 10000);
 		    });
+        } else if(typeName === "DOUBLE") {
+        	times(num, function(i) {
+        		let position = toff + 8 * i;
+				console.log("val:", val);
+        		let n = val[i];
+        		console.log("n:", n);
+				bin.writeDouble(data, position, n);
+        	});
         }
-		
 
-		if(dlen>4) {  dlen += (dlen&1);  eoff += dlen;  }
+		if(dlen>4) {
+			dlen += (dlen&1);
+			eoff += dlen;
+		}
 		
 		offset += 4;     
 		
@@ -174,7 +198,7 @@ var encodeImage = function(values, width, height, metadata) {
 	    284: [ 1 ],
 	    286: [ 0 ],
 	    287: [ 0 ],
-	    305: [ "geotiff.js" ],
+	    305: "geotiff.js", // no array for ASCII(Z)
 	    338: [ 1 ]
 	};
 	
@@ -187,11 +211,14 @@ var encodeImage = function(values, width, height, metadata) {
 	var prfx = new Uint8Array(encode_ifds([ifd]));
 	//console.log("prfx:", prfx);
 	
+	console.log("values:", values);
 	var img = new Uint8Array(values);
 	
 	var data = new Uint8Array(num_bytes_in_ifd + width * height * 4);
 	times(prfx.length, function(i){ data[i] = prfx[i]; });
-    times(img.length, function(i){ data[num_bytes_in_ifd + i] = img[i]; });
+    times(img.length, function(i){
+    	data[num_bytes_in_ifd + i] = img[i];
+    });
 	return data.buffer;
 };
 
@@ -230,6 +257,9 @@ var write_geotiff = function(data, metadata) {
 
     var height = data[0].length;
     var width = data[0][0].length;
+    
+    metadata.ImageLength = height;
+    metadata.ImageWidth = width;
 
     var flattened = [];
     times(height, function(row_index) {
@@ -306,6 +336,8 @@ var write_geotiff = function(data, metadata) {
         "GeographicTypeGeoKey",
         "GTModelTypeGeoKey",
         "GTRasterTypeGeoKey",
+        "ImageLength", // synonym of ImageHeight
+        "ImageWidth",
         "PhotometricInterpretation",
         "PlanarConfiguration",
         "ResolutionUnit",

@@ -154,7 +154,7 @@ var fieldTagTypes = {
 	2048: "SHORT",
 	2049: "ASCII",
 	33550: "DOUBLE",
-	33922: "RATIONAL",
+	33922: "DOUBLE",
 	34665: "LONG",
 	34735: "SHORT",
 	34737: "ASCII" 
