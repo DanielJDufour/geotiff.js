@@ -1,7 +1,9 @@
 var chai = require("chai");
 var expect = chai.expect;
 
-import { flattenDeep, map } from "lodash";
+var _ = require("lodash");
+var flattenDeep = _.flattenDeep;
+var map = _.map;
 
 var Promise = require('es6-promise').Promise;
 

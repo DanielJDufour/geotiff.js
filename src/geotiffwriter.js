@@ -2,11 +2,14 @@
 //!!!!! If strip definition tags are omitted, the image is assumed to contain a single strip.
 var globals = require("./globals.js");
 
-import { assign, endsWith, isUndefined, forEach, invert, map, times } from "lodash";
-
-import { BitView } from "bit-buffer";
-
-var bufferExists = typeof Buffer !== "undefined";
+var _ = require("lodash");
+var assign = _.assign;
+var endsWith = _.endsWith;
+var isUndefined = _.isUndefined;
+var forEach = _.forEach;
+var invert = _.invert;
+var map = _.map;
+var times = _.times;
 
 var code2typeName = globals.fieldTagTypes;
 var tagName2Code = invert(globals.fieldTagNames);
@@ -30,31 +33,17 @@ var stringify = function(obj) {
   }
 };
 
-writeUint 
-
-var writeUint;
-if (bufferExists) {
-	
-	writeUint = function(buffer, offset, value) {
-		buffer.writeUint8(value, offset);
-	}
-	
-	writeUshort = function(buffer, offset, value) {
-		buffer.writeUint16(value, offset);
-	}
-	
-} else {
-	writeUint = function(arrayBuffer, offset, value) {
-		new DataView(arrayBuffer).setUint8(offset,	value);
-	}
-	writeUshort = function(arrayBuffer, offset, value) {
-		new DataView(arrayBuffer).setUint16(offset, value);
-	}
-	
-}
-
-
 var _binBE = {
+	writeUshort: function(buff, p, n) {
+	    buff[p] = (n>> 8)&255;
+	    buff[p+1] = n&255;
+	},
+	writeUint: function(buff, p, n) {
+	    buff[p] = (n>>24)&255;
+	    buff[p+1] = (n>>16)&255;
+	    buff[p+2] = (n>>8)&255;
+	    buff[p+3] = (n>>0)&255;
+	},
 	writeASCII: function(buff, p, s) {
 		console.log("starting writeASCII with", p, s);
 		times(s.length, function(i){
@@ -80,8 +69,6 @@ var _writeIFD = function(bin, data, offset, ifd) {
 	});
 	console.log("keys:", keys);
 	
-	var bitView = new BitView(data);
-	bitView.setUint16(offset, keys.length);
 	bin.writeUshort(data, offset, keys.length);
 	offset += 2;
 
@@ -119,8 +106,7 @@ var _writeIFD = function(bin, data, offset, ifd) {
 		bin.writeUshort(data, offset, typeNum);
 		offset+=2;
 		
-		
-		bin.writeUint(data, offset, num);
+		bin.writeUint(data, offset, num );
 		offset+=4;
 
 		var dlen = [-1, 1, 1, 2, 4, 8, 0, 0, 0, 0, 0, 0, 8][typeNum] * num;
