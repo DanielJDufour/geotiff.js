@@ -2,7 +2,11 @@
 //!!!!! If strip definition tags are omitted, the image is assumed to contain a single strip.
 var globals = require("./globals.js");
 
-import { assign, endsWith, isUndefined, forEach, invert, times } from "lodash"; 
+import { assign, endsWith, isUndefined, forEach, invert, map, times } from "lodash";
+
+import { BitView } from "bit-buffer";
+
+var bufferExists = typeof Buffer !== "undefined";
 
 var code2typeName = globals.fieldTagTypes;
 var tagName2Code = invert(globals.fieldTagNames);
@@ -15,20 +19,42 @@ assign(name2code, geoKeyName2Code);
 var typeName2byte = invert(globals.fieldTypeNames);
 
 //config variables
-var num_bytes_in_ifd = 2000;
+var num_bytes_in_ifd = 1000;
+
+
+var stringify = function(obj) {
+  if (obj.length) {
+    return JSON.stringify(map(obj));
+  } else {
+    return JSON.stringify(obj);
+  }
+};
+
+writeUint 
+
+var writeUint;
+if (bufferExists) {
+	
+	writeUint = function(buffer, offset, value) {
+		buffer.writeUint8(value, offset);
+	}
+	
+	writeUshort = function(buffer, offset, value) {
+		buffer.writeUint16(value, offset);
+	}
+	
+} else {
+	writeUint = function(arrayBuffer, offset, value) {
+		new DataView(arrayBuffer).setUint8(offset,	value);
+	}
+	writeUshort = function(arrayBuffer, offset, value) {
+		new DataView(arrayBuffer).setUint16(offset, value);
+	}
+	
+}
 
 
 var _binBE = {
-	writeUshort: function(buff, p, n) {
-	    buff[p] = (n>> 8)&255;
-	    buff[p+1] = n&255;
-	},
-	writeUint: function(buff, p, n) {
-	    buff[p] = (n>>24)&255;
-	    buff[p+1] = (n>>16)&255;
-	    buff[p+2] = (n>>8)&255;
-	    buff[p+3] = (n>>0)&255;
-	},
 	writeASCII: function(buff, p, s) {
 		console.log("starting writeASCII with", p, s);
 		times(s.length, function(i){
@@ -39,10 +65,6 @@ var _binBE = {
 };
 _binBE.fl64 = new Float64Array(_binBE.ui8.buffer);
 _binBE.writeDouble = function(buff, p, n) {
-	console.log("starting writeDouble");
-	//console.log("buff:", buff);
-	console.log("[wd] p:", p);
-	console.log("[wd] n:", n);	
 	_binBE.fl64[0] = n;
 	times(8, function(i){
 		buff[p + i] = _binBE.ui8[7 - i];
@@ -58,6 +80,8 @@ var _writeIFD = function(bin, data, offset, ifd) {
 	});
 	console.log("keys:", keys);
 	
+	var bitView = new BitView(data);
+	bitView.setUint16(offset, keys.length);
 	bin.writeUshort(data, offset, keys.length);
 	offset += 2;
 
@@ -95,10 +119,11 @@ var _writeIFD = function(bin, data, offset, ifd) {
 		bin.writeUshort(data, offset, typeNum);
 		offset+=2;
 		
-		bin.writeUint(data, offset, num );
+		
+		bin.writeUint(data, offset, num);
 		offset+=4;
 
-		var dlen = [-1, 1, 1, 2, 4, 8][typeNum] * num;
+		var dlen = [-1, 1, 1, 2, 4, 8, 0, 0, 0, 0, 0, 0, 8][typeNum] * num;
 		var toff = offset;
 		
 		if(dlen > 4) {
@@ -107,9 +132,6 @@ var _writeIFD = function(bin, data, offset, ifd) {
 		}
 
 		if(typeName === "ASCII") {
-			console.log("dlen:", dlen);
-			console.log("toff:", toff);
-			console.log("val:", val);
 		    bin.writeASCII(data, toff, val);
 		} else if(typeName === "SHORT") {
 		    times(num, function(i){
@@ -126,11 +148,7 @@ var _writeIFD = function(bin, data, offset, ifd) {
 		    });
         } else if(typeName === "DOUBLE") {
         	times(num, function(i) {
-        		let position = toff + 8 * i;
-				console.log("val:", val);
-        		let n = val[i];
-        		console.log("n:", n);
-				bin.writeDouble(data, position, n);
+				bin.writeDouble(data, toff + 8 * i, val[i]);
         	});
         }
 
@@ -151,9 +169,15 @@ var encode_ifds = function(ifds) {
     var data = new Uint8Array(num_bytes_in_ifd);
     var offset = 4;
     var bin = _binBE;
-    data[0]=77;
-    data[1]=77;
-    data[3]=42;
+    
+    // set big-endian byte-order
+    // https://en.wikipedia.org/wiki/TIFF#Byte_order
+    data[0] = 77;
+    data[1] = 77;
+    
+    // set format-version number
+    // https://en.wikipedia.org/wiki/TIFF#Byte_order
+    data[3] = 42;
 
 	var ifdo = 8;
 	
@@ -185,6 +209,8 @@ var encode_ifds = function(ifds) {
 
 var encodeImage = function(values, width, height, metadata) {
     
+
+    
 	var ifd = {
 	    256: [ width ],
 	    257: [ height ],
@@ -209,16 +235,24 @@ var encodeImage = function(values, width, height, metadata) {
 	}
 	
 	var prfx = new Uint8Array(encode_ifds([ifd]));
-	//console.log("prfx:", prfx);
-	
-	console.log("values:", values);
+
+	console.log("value:", values);
 	var img = new Uint8Array(values);
 	
-	var data = new Uint8Array(num_bytes_in_ifd + width * height * 4);
+	let samplesPerPixel = ifd[277];
+	console.log("samplesPerPixel:", samplesPerPixel);
+	
+	var data = new Uint8Array(num_bytes_in_ifd + width * height * samplesPerPixel);
 	times(prfx.length, function(i){ data[i] = prfx[i]; });
+	forEach(img, function(value, i) {
+    	data[num_bytes_in_ifd + i] = value;
+	});
     times(img.length, function(i){
-    	data[num_bytes_in_ifd + i] = img[i];
+    	console.log("img[i]:", img[i]);
     });
+    
+    console.log("end data:", stringify(data));
+    
 	return data.buffer;
 };
 

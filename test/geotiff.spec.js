@@ -508,7 +508,7 @@ describe("writeTests", function() {
       "PlanarConfiguration": 1,
       "SampleFormat": [1],
       "ModelPixelScale": [0.031355, 0.031355, 0],
-      //"ModelTiepoint": [0, 0, 0, 11.331755000000001, 46.268645, 0],
+      "ModelTiepoint": [0, 0, 0, 11.331755000000001, 46.268645, 0],
       "GeoKeyDirectory": [1, 1, 0, 5, 1024, 0, 1, 2, 1025, 0, 1, 1, 2048, 0, 1, 4326, 2049, 34737, 7, 0, 2054, 0, 1, 9102],
       "GeoAsciiParams": "WGS 84",
       "GTModelTypeGeoKey": 2,
@@ -528,11 +528,11 @@ describe("writeTests", function() {
     expect(fd.GeoAsciiParams).to.equal("WGS 84\u0000");
     expect(fd.ImageLength).to.equal(3);
     expect(fd.ImageWidth).to.equal(3);
-    //expect(stringify(fd.ModelPixelScale)).to.equal(stringify(metadata.ModelPixelScale));
-    //expect(stringify(fd.ModelTiepoint)).to.equal(stringify(metadata.ModelTiepoint));
+    expect(stringify(fd.ModelPixelScale)).to.equal(stringify(metadata.ModelPixelScale));
+    expect(stringify(fd.ModelTiepoint)).to.equal(stringify(metadata.ModelTiepoint));
     expect(fd.PhotometricInterpretation).to.equal(2);
     expect(fd.PlanarConfiguration).to.equal(1);
-    expect(stringify(fd.StripOffsets)).to.equal("[2000]"); //hardcoded at 2000 now rather than calculated
+    expect(stringify(fd.StripOffsets)).to.equal("[1000]"); //hardcoded at 2000 now rather than calculated
     expect(stringify(fd.SampleFormat)).to.equal(stringify([1]));
     expect(fd.SamplesPerPixel).to.equal(1);
     expect(stringify(fd.RowsPerStrip)).to.equal("3");
