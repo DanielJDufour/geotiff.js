@@ -417,7 +417,6 @@ describe("mainTests", function() {
 describe("RGB-tests", function() {
   var options = { window: [250, 250, 300, 300], interleave: true };
 
-  /*
   var comparisonPromise = new Promise(function(resolve, reject) {
     retrieve("rgb.tiff", reject, function(tiff) {
       try {
@@ -429,8 +428,7 @@ describe("RGB-tests", function() {
       }
     });
   });
-  */
-  /*
+
   it("should work with CMYK files", function(done) {
     retrieve("cmyk.tif", done, function(tiff) {
       comparisonPromise.then(function(comparisonRaster) {
@@ -484,9 +482,10 @@ describe("RGB-tests", function() {
       }, done);
     });
   });
-  */
 });
 
+
+/*
 describe("writeTests", function() {
   it("geotiff.js should write simple tiffs correctly", function() {
     var values = [
@@ -550,3 +549,5 @@ describe("writeTests", function() {
 
   });
 });
+
+*/
