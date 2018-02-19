@@ -39,13 +39,17 @@ var retrieveSync = function (filename, done, callback) {
   xhr.send();
 };
 
-var stringify = function (obj) {
-  if (obj.length) {
-    return JSON.stringify(_.toArray(obj));
+var toArrayRecursively = function (input) {
+  if (input.length) {
+    return _.toArray(input).map(toArrayRecursively);
   }
   else {
-    return JSON.stringify(obj);
+    return input;
   }
+}
+
+var normalize = function (input) {
+  return JSON.stringify(toArrayRecursively(input));
 }
 
 var getMockMetaData = function (height, width) {
@@ -72,7 +76,6 @@ var getMockMetaData = function (height, width) {
   };
 }
 
-/*
 describe("mainTests", function () {
   it("geotiff.js module available", function () {
     expect(GeoTIFF).to.be.ok;
@@ -509,17 +512,12 @@ describe("RGB-tests", function () {
     });
   });
 });
-*/
 
-///*
 describe("writeTests", function () {
 
-  /*
   it("should write flattened pixel values", function () {
 
-    var original_values = [
-      [1, 2, 3, 4, 5, 6, 7, 8, 9]
-    ];
+    var original_values = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
     let height = 3;
     let width = 3;
@@ -530,12 +528,11 @@ describe("writeTests", function () {
 
     var new_geotiff = GeoTIFF.parse(new_geotiff_as_binary_data);
 
-    var new_values = new_geotiff.getImage().readRasters()[0];
+    var new_values = toArrayRecursively(new_geotiff.getImage().readRasters()[0]);
 
-    expect(stringify(new_values)).to.equal(stringify(original_values));
+    expect(JSON.stringify(new_values)).to.equal(JSON.stringify(original_values));
 
   });
-  */
 
   it("should write pixel values in two dimensions", function () {
 
@@ -561,40 +558,44 @@ describe("writeTests", function () {
       return chunk(_.toArray(band), width);
     });
 
-    expect(stringify(new_values_reshaped)).to.equal(stringify(original_values));
+    expect(JSON.stringify(new_values_reshaped)).to.equal(JSON.stringify(original_values));
 
   });
 
-  /*
+
+  it("should write metadata correctly", function () {
 
 
-    
-    
-    var fileDirectory = parsed.fileDirectories[0][0];
-    expect(stringify(fileDirectory.BitsPerSample)).to.equal(stringify([8]));
+    var height = 12;
+    var width = 12;
+    var original_values = _.range(height * width);
+
+    var metadata = getMockMetaData(height, width);
+
+    var new_geotiff_as_binary_data = GeoTIFF.create(original_values, metadata);
+
+    var new_geotiff = GeoTIFF.parse(new_geotiff_as_binary_data);
+
+    var new_values = toArrayRecursively(new_geotiff.getImage().readRasters()[0]);
+
+    expect(JSON.stringify(new_values)).to.equal(JSON.stringify(original_values));
+
+    var fileDirectory = new_geotiff.fileDirectories[0][0];
+    expect(normalize(fileDirectory.BitsPerSample)).to.equal(normalize([8]));
     expect(fileDirectory.Compression).to.equal(1);
     expect(fileDirectory.GeoAsciiParams).to.equal("WGS 84\u0000");
-    expect(fileDirectory.ImageLength).to.equal(3);
-    expect(fileDirectory.ImageWidth).to.equal(3);
-    expect(stringify(fileDirectory.ModelPixelScale)).to.equal(stringify(metadata.ModelPixelScale));
-    expect(stringify(fileDirectory.ModelTiepoint)).to.equal(stringify(metadata.ModelTiepoint));
+    expect(fileDirectory.ImageLength).to.equal(height);
+    expect(fileDirectory.ImageWidth).to.equal(width);
+    expect(normalize(fileDirectory.ModelPixelScale)).to.equal(normalize(metadata.ModelPixelScale));
+    expect(normalize(fileDirectory.ModelTiepoint)).to.equal(normalize(metadata.ModelTiepoint));
     expect(fileDirectory.PhotometricInterpretation).to.equal(2);
     expect(fileDirectory.PlanarConfiguration).to.equal(1);
-    expect(stringify(fileDirectory.StripOffsets)).to.equal("[1000]"); //hardcoded at 2000 now rather than calculated
-    expect(stringify(fileDirectory.SampleFormat)).to.equal(stringify([1]));
+    expect(normalize(fileDirectory.StripOffsets)).to.equal("[1000]"); //hardcoded at 2000 now rather than calculated
+    expect(normalize(fileDirectory.SampleFormat)).to.equal(normalize([1]));
     expect(fileDirectory.SamplesPerPixel).to.equal(1);
-    expect(stringify(fileDirectory.RowsPerStrip)).to.equal("3");
-    expect(stringify(fileDirectory.StripByteCounts)).to.equal(stringify((metadata.StripByteCounts)));
-
-    let image = parsed.getImage();
-    let rasters = image.readRasters();
-    let raster = rasters[0];
-    console.log("values:")
-    expect(stringify(raster)).to.equal(stringify(flattenDeep(values)));
-
-
+    expect(normalize(fileDirectory.RowsPerStrip)).to.equal(normalize(height));
+    expect(normalize(fileDirectory.StripByteCounts)).to.equal(normalize(metadata.StripByteCounts));
 
   });
-  */
+
 });
-//*/
