@@ -421,7 +421,7 @@ GeoTIFFImage.prototype = {
       var imageWidth = this.getWidth();
 
       var predictor = this.fileDirectory.Predictor || 1;
-      console.log("predictor:", predictor);
+      //console.log("predictor:", predictor);
 
       var srcSampleOffsets = [];
       var sampleReaders = [];
@@ -448,12 +448,12 @@ GeoTIFFImage.prototype = {
               bytesPerPixel = this.getSampleByteSize(sample);
             }
             var tile = new DataView(this.getTileOrStrip(xTile, yTile, sample));
-            console.log('tile:', stringify(new Uint8Array(tile)));
+            //console.log('tile:', stringify(new Uint8Array(tile)));
 
             var reader = sampleReaders[sampleIndex];
             var ymax = Math.min(tileHeight, tileHeight - (lastLine - imageWindow[3]));
             var xmax = Math.min(tileWidth, tileWidth - (lastCol - imageWindow[2]));
-            console.log("xmax:", xmax);
+            //console.log("xmax:", xmax);
             var totalbytes = (ymax * tileWidth + xmax) * bytesPerPixel;
             var tileLength = (new Uint8Array(tile.buffer).length);
             if (2*tileLength !== totalbytes && this._debugMessages) {
@@ -461,18 +461,18 @@ GeoTIFFImage.prototype = {
             }
             for (var y = Math.max(0, imageWindow[1] - firstLine); y < ymax; ++y) {
               for (var x = Math.max(0, imageWindow[0] - firstCol); x < xmax; ++x) {
-                console.log(" ");
-                console.log(" ");
-                console.log("x:", x);
+                //console.log(" ");
+                //console.log(" ");
+                //console.log("x:", x);
                 var pixelOffset = (y * tileWidth + x) * bytesPerPixel;
-                console.log("pixelOffset:", pixelOffset);
-                console.log("tileLength", tileLength);
+                //console.log("pixelOffset:", pixelOffset);
+                //console.log("tileLength", tileLength);
                 var value = 0;
                 if (pixelOffset < tileLength) {
                   value = reader.call(tile, pixelOffset + srcSampleOffsets[sampleIndex], this.littleEndian);
-                  console.log("reader called value:", value);
+                  //console.log("reader called value:", value);
                 }
-                console.log("value:", value);
+                //console.log("value:", value);
                 var windowCoordinate;
                 if (interleave) {
                   if (predictor !== 1 && x > 0) {
@@ -502,7 +502,7 @@ GeoTIFFImage.prototype = {
                   ) * windowWidth + x + firstCol - imageWindow[0];
                   valueArrays[sampleIndex][windowCoordinate] = value;
                 }
-                console.log("x ending:", x);
+                //console.log("x ending:", x);
               }
             }
           }
