@@ -3850,6 +3850,7 @@ var LZWDecoder = require("./compression/lzw.js");
 var DeflateDecoder = require("./compression/deflate.js");
 var PackbitsDecoder = require("./compression/packbits.js");
 var applyPredictor = require("./predictor.js").applyPredictor;
+var toArray = require("./utils.js").toArray;
 
 var sum = function sum(array, start, end) {
   var s = 0;
@@ -3860,10 +3861,10 @@ var sum = function sum(array, start, end) {
 };
 
 var arrayForType = function arrayForType(format, bitsPerSample, size) {
-  console.log("starting arrayForType");
-  console.log("format:", format);
-  console.log("bitsPerSample:", bitsPerSample);
-  console.log("size:", size);
+  //console.log("starting arrayForType");
+  //console.log("format:", format);
+  //console.log("bitsPerSample:", bitsPerSample);
+  //console.log("size:", size);
   switch (format) {
     case 1:
       // unsigned integer data
@@ -4070,7 +4071,7 @@ GeoTIFFImage.prototype = {
   },
 
   getArrayForSample: function getArrayForSample(sampleIndex, size) {
-    console.log("starting getArrayForSample:", sampleIndex, size);
+    //console.log("starting getArrayForSample:", sampleIndex, size);
     var format = this.fileDirectory.SampleFormat ? this.fileDirectory.SampleFormat[sampleIndex] : 1;
     var bitsPerSample = this.fileDirectory.BitsPerSample[sampleIndex];
     return arrayForType(format, bitsPerSample, size);
@@ -4088,28 +4089,38 @@ GeoTIFFImage.prototype = {
    * @returns {(Int8Array|Uint8Array|Int16Array|Uint16Array|Int32Array|Uint32Array|Float32Array|Float64Array)}
    */
   getTileOrStrip: function getTileOrStrip(x, y, sample, callback) {
+    //console.log("starting getTileOrStrip with", x, y, sample, typeof callback);
     var numTilesPerRow = Math.ceil(this.getWidth() / this.getTileWidth());
+    //console.log("numTilesPerRow:", numTilesPerRow);
     var numTilesPerCol = Math.ceil(this.getHeight() / this.getTileHeight());
+    //console.log("numTilesPerCol:", numTilesPerCol);
     var index;
     var tiles = this.tiles;
+    //console.log("tiles:", tiles);
+    //console.log("this.planarConfiguration:", this.planarConfiguration);
     if (this.planarConfiguration === 1) {
       index = y * numTilesPerRow + x;
     } else if (this.planarConfiguration === 2) {
       index = sample * numTilesPerRow * numTilesPerCol + y * numTilesPerRow + x;
     }
+    //console.log("index:", index);
 
     if (tiles !== null && index in tiles) {
       if (callback) {
         return callback(null, { x: x, y: y, sample: sample, data: tiles[index] });
       }
+      //console.log("returning tile from index");
       return tiles[index];
     } else {
       var offset, byteCount;
+      //console.log("this.isTiled:", this.isTiled);
       if (this.isTiled) {
         offset = this.fileDirectory.TileOffsets[index];
         byteCount = this.fileDirectory.TileByteCounts[index];
       } else {
+        //console.log("this.fileDirectory.StripOffsets:", this.fileDirectory.StripOffsets);
         offset = this.fileDirectory.StripOffsets[index];
+        //console.log("this.fileDirectory.StripByteCounts:", this.fileDirectory.StripByteCounts);
         byteCount = this.fileDirectory.StripByteCounts[index];
       }
       var slice = this.dataView.buffer.slice(offset, offset + byteCount);
@@ -4121,6 +4132,7 @@ GeoTIFFImage.prototype = {
           callback(error, { x: x, y: y, sample: sample, data: data });
         });
       }
+      //console.log("slice:", toArray(new Uint8Array(slice)));
       var block = this.getDecoder().decodeBlock(slice);
       if (tiles !== null) {
         tiles[index] = block;
@@ -4231,8 +4243,12 @@ GeoTIFFImage.prototype = {
 
   _readRaster: function _readRaster(imageWindow, samples, valueArrays, interleave, callback, callbackError) {
     try {
+      //console.log("starting _readRaster with");
+      //console.log("samples:", samples);
       var tileWidth = this.getTileWidth();
+      //console.log("tileWidth:", tileWidth);
       var tileHeight = this.getTileHeight();
+      //console.log("tileHeight:", tileHeight);
 
       var minXTile = Math.floor(imageWindow[0] / tileWidth);
       var maxXTile = Math.ceil(imageWindow[2] / tileWidth);
@@ -4245,9 +4261,11 @@ GeoTIFFImage.prototype = {
       var windowHeight = imageWindow[3] - imageWindow[1];
 
       var bytesPerPixel = this.getBytesPerPixel();
+      //console.log("bytesPerPixel:", bytesPerPixel);
       var imageWidth = this.getWidth();
 
       var predictor = this.fileDirectory.Predictor || 1;
+      //console.log("predictor:", predictor);
 
       var srcSampleOffsets = [];
       var sampleReaders = [];
@@ -4261,7 +4279,9 @@ GeoTIFFImage.prototype = {
       }
 
       for (var yTile = minYTile; yTile < maxYTile; ++yTile) {
+        //console.log("yTile:", yTile);
         for (var xTile = minXTile; xTile < maxXTile; ++xTile) {
+          //console.log("xTile:", xTile);
           var firstLine = yTile * tileHeight;
           var firstCol = xTile * tileWidth;
           var lastLine = (yTile + 1) * tileHeight;
@@ -4269,6 +4289,7 @@ GeoTIFFImage.prototype = {
 
           for (var sampleIndex = 0; sampleIndex < samples.length; ++sampleIndex) {
             var sample = samples[sampleIndex];
+            //console.log("sample:", sample);
             if (this.planarConfiguration === 2) {
               bytesPerPixel = this.getSampleByteSize(sample);
             }
@@ -4278,12 +4299,17 @@ GeoTIFFImage.prototype = {
               buffer = applyPredictor(buffer, predictor, tileWidth, tileHeight, this.fileDirectory.BitsPerSample);
             }
             var tile = new DataView(buffer);
+            //console.log("tile:", toArray(new Uint8Array(buffer)));
 
             var reader = sampleReaders[sampleIndex];
             var ymax = Math.min(tileHeight, tileHeight - (lastLine - imageWindow[3]));
+            //console.log("ymax:", ymax);
             var xmax = Math.min(tileWidth, tileWidth - (lastCol - imageWindow[2]));
+            //console.log("xmax:", xmax);
             var totalbytes = (ymax * tileWidth + xmax) * bytesPerPixel;
+            //console.log("totalbytes:", totalbytes);
             var tileLength = new Uint8Array(tile.buffer).length;
+            //console.log("tileLength:", tileLength);
             if (2 * tileLength !== totalbytes && this._debugMessages) {
               console.warn('dimension mismatch', tileLength, totalbytes);
             }
@@ -4293,6 +4319,7 @@ GeoTIFFImage.prototype = {
                 var value = 0;
                 if (pixelOffset < tileLength - 1) {
                   value = reader.call(tile, pixelOffset + srcSampleOffsets[sampleIndex], this.littleEndian);
+                  //console.log("read value:", value);
                 }
 
                 var windowCoordinate;
@@ -4308,6 +4335,7 @@ GeoTIFFImage.prototype = {
           }
         }
       }
+      //console.log("valueArrays:", valueArrays);
       callback(valueArrays);
       return valueArrays;
     } catch (error) {
@@ -4669,7 +4697,7 @@ GeoTIFFImage.prototype = {
 
 module.exports = GeoTIFFImage;
 
-},{"./compression/deflate.js":14,"./compression/lzw.js":15,"./compression/packbits.js":16,"./compression/raw.js":17,"./globals.js":22,"./predictor.js":24,"./rgb.js":25}],21:[function(require,module,exports){
+},{"./compression/deflate.js":14,"./compression/lzw.js":15,"./compression/packbits.js":16,"./compression/raw.js":17,"./globals.js":22,"./predictor.js":24,"./rgb.js":25,"./utils.js":26}],21:[function(require,module,exports){
 'use strict';
 
 /*
@@ -4916,21 +4944,11 @@ var encodeImage = function encodeImage(values, width, height, metadata) {
 	}
 
 	var ifd = {
-		256: [width],
-		257: [height],
-		258: [8, 8, 8, 8],
-		259: [1],
-		262: [2],
+		256: [width], // ImageWidth
+		257: [height], // ImageLength
 		273: [num_bytes_in_ifd], // strips offset
-		277: [4],
-		278: [height],
-		/* rows per strip */
-		279: [width * height * 4], // strip byte counts
-		284: [1],
-		286: [0],
-		287: [0],
-		305: "geotiff.js", // no array for ASCII(Z)
-		338: [1]
+		278: [height], // RowsPerStrip
+		305: "geotiff.js" // no array for ASCII(Z)
 	};
 
 	if (metadata) {
@@ -4980,7 +4998,8 @@ var toArray = function toArray(input) {
 
 var metadata_defaults = [["Compression", 1], //no compression
 ["PlanarConfiguration", 1], ["XPosition", 0], ["YPosition", 0], ["ResolutionUnit", 1], // Code 1 for actual pixel count or 2 for pixels per inch.
-["ExtraSamples", 0], ["GeoAsciiParams", "WGS 84\0"], ["ModelTiepoint", [0, 0, 0, -180, 90, 0]], // raster fits whole globe
+["ExtraSamples", 0], // should this be an array??
+["GeoAsciiParams", "WGS 84\0"], ["ModelTiepoint", [0, 0, 0, -180, 90, 0]], // raster fits whole globe
 ["GTModelTypeGeoKey", 2], ["GTRasterTypeGeoKey", 1], ["GeographicTypeGeoKey", 4326], ["GeogCitationGeoKey", "WGS 84"]];
 
 var write_geotiff = function write_geotiff(data, metadata) {
@@ -5049,7 +5068,8 @@ var write_geotiff = function write_geotiff(data, metadata) {
 	//metadata.RowsPerStrip = toArray(metadata.RowsPerStrip);
 
 	if (!metadata.StripByteCounts) {
-		metadata.StripByteCounts = [height * width];
+		// we are only writing one strip
+		metadata.StripByteCounts = [number_of_bands * height * width];
 	}
 
 	if (!metadata.ModelPixelScale) {
@@ -5684,7 +5704,11 @@ var chunk = function chunk(iterable, length) {
   var results = [];
   var length_of_iterable = iterable.length;
   for (var i = 0; i < length_of_iterable; i += length) {
-    results.push(iterable.slice(i, i + length));
+    var chunk = [];
+    for (var ci = i; ci < i + length; ci++) {
+      chunk.push(iterable[ci]);
+    }
+    results.push(chunk);
   }
   return results;
 };
