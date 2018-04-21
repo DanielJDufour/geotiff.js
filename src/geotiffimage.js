@@ -18,6 +18,10 @@ var sum = function(array, start, end) {
 };
 
 var arrayForType = function(format, bitsPerSample, size) {
+  console.log("starting arrayForType");
+  console.log("format:", format);
+  console.log("bitsPerSample:", bitsPerSample);
+  console.log("size:", size);
   switch (format) {
     case 1: // unsigned integer data
       switch (bitsPerSample) {
@@ -48,6 +52,7 @@ var arrayForType = function(format, bitsPerSample, size) {
       }
       break;
   }
+
   throw Error("Unsupported data format/bitsPerSample");
 };
 
@@ -214,6 +219,7 @@ GeoTIFFImage.prototype = {
   },
 
   getArrayForSample: function(sampleIndex, size) {
+    console.log("starting getArrayForSample:", sampleIndex, size);
     var format = this.fileDirectory.SampleFormat ? this.fileDirectory.SampleFormat[sampleIndex] : 1;
     var bitsPerSample = this.fileDirectory.BitsPerSample[sampleIndex];
     return arrayForType(format, bitsPerSample, size);
@@ -794,7 +800,7 @@ GeoTIFFImage.prototype = {
         tiePoints[3],
         tiePoints[4],
         tiePoints[5]
-      ]; 
+      ];
     } else if (modelTransformation) {
       return [
         modelTransformation[3],

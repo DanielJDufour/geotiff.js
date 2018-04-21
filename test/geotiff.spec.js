@@ -76,7 +76,7 @@ var getMockMetaData = function(height, width) {
     "GeogCitationGeoKey": "WGS 84"
   };
 }
-
+/*
 describe("mainTests", function() {
   it("geotiff.js module available", function() {
     expect(GeoTIFF).to.be.ok;
@@ -566,10 +566,11 @@ describe("RGB-tests", function() {
     });
   });
 });
-
+*/
 describe("writeTests", function() {
 
-it("should write pixel values and metadata with sensible defaults", function() {
+  /*
+  it("should write pixel values and metadata with sensible defaults", function() {
 
     var original_values = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
@@ -610,7 +611,76 @@ it("should write pixel values and metadata with sensible defaults", function() {
     expect(normalize(fileDirectory.StripByteCounts)).to.equal(normalize(metadata.StripByteCounts));
 
   });
+  */
+  ///*
+  it("should write rgb data with sensible defaults", function() {
 
+    var red = [
+      [ 255, 255, 255 ],
+      [ 0, 0, 0 ],
+      [ 0, 0, 0 ]
+    ];
+
+    var green = [
+      [ 0, 0, 0 ],
+      [ 255, 255, 255 ],
+      [ 0, 0, 0 ]
+    ];
+
+    var blue = [
+      [ 0, 0, 0 ],
+      [ 0, 0, 0 ],
+      [ 255, 255, 255 ]
+    ];
+
+    var original_values = [red, green, blue];
+
+    var metadata = {
+      height: 3,
+      width: 3
+    };
+
+    var new_geotiff_as_binary_data = GeoTIFF.create(original_values, metadata);
+
+    var new_geotiff = GeoTIFF.parse(new_geotiff_as_binary_data);
+    console.log("new_geotiff:", new_geotiff);
+
+    var new_values = new_geotiff.getImage().readRasters();
+    var red = toArray(new_values[0]);
+    var green = toArray(new_values[1]);
+    var blue = toArray(new_values[2]);
+    console.log("red:", red);
+    console.log("green:", green);
+    console.log("blue:", blue);
+
+    //expect(JSON.stringify(new_values.slice(0,-1))).to.equal(JSON.stringify(original_values.slice(0,-1)));
+
+    var geoKeys = new_geotiff.getImage().getGeoKeys();
+    expect(geoKeys).to.be.an("object");
+    expect(geoKeys.GTModelTypeGeoKey).to.equal(2);
+    expect(geoKeys.GTRasterTypeGeoKey).to.equal(1);
+    expect(geoKeys.GeographicTypeGeoKey).to.equal(4326);
+    expect(geoKeys.GeogCitationGeoKey).to.equal('WGS 84');
+
+    var fileDirectory = new_geotiff.fileDirectories[0][0];
+    expect(normalize(fileDirectory.BitsPerSample)).to.equal(normalize([8,8,8]));
+    expect(fileDirectory.Compression).to.equal(1);
+    expect(fileDirectory.GeoAsciiParams).to.equal("WGS 84\u0000");
+    expect(fileDirectory.ImageLength).to.equal(3);
+    expect(fileDirectory.ImageWidth).to.equal(3);
+    expect(normalize(fileDirectory.ModelPixelScale)).to.equal(normalize(metadata.ModelPixelScale));
+    expect(normalize(fileDirectory.ModelTiepoint)).to.equal(normalize(metadata.ModelTiepoint));
+    expect(fileDirectory.PhotometricInterpretation).to.equal(2);
+    expect(fileDirectory.PlanarConfiguration).to.equal(1);
+    expect(normalize(fileDirectory.StripOffsets)).to.equal("[1000]"); //hardcoded at 2000 now rather than calculated
+    expect(normalize(fileDirectory.SampleFormat)).to.equal(normalize([1]));
+    expect(fileDirectory.SamplesPerPixel).to.equal(1);
+    expect(normalize(fileDirectory.RowsPerStrip)).to.equal(normalize(3));
+    expect(normalize(fileDirectory.StripByteCounts)).to.equal(normalize(metadata.StripByteCounts));
+
+  });
+  //*/
+  /*
   it("should write flattened pixel values", function() {
 
     var original_values = [1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -693,5 +763,5 @@ it("should write pixel values and metadata with sensible defaults", function() {
     expect(normalize(fileDirectory.StripByteCounts)).to.equal(normalize(metadata.StripByteCounts));
 
   });
-
+  */
 });

@@ -3860,6 +3860,10 @@ var sum = function sum(array, start, end) {
 };
 
 var arrayForType = function arrayForType(format, bitsPerSample, size) {
+  console.log("starting arrayForType");
+  console.log("format:", format);
+  console.log("bitsPerSample:", bitsPerSample);
+  console.log("size:", size);
   switch (format) {
     case 1:
       // unsigned integer data
@@ -3893,6 +3897,7 @@ var arrayForType = function arrayForType(format, bitsPerSample, size) {
       }
       break;
   }
+
   throw Error("Unsupported data format/bitsPerSample");
 };
 
@@ -4065,6 +4070,7 @@ GeoTIFFImage.prototype = {
   },
 
   getArrayForSample: function getArrayForSample(sampleIndex, size) {
+    console.log("starting getArrayForSample:", sampleIndex, size);
     var format = this.fileDirectory.SampleFormat ? this.fileDirectory.SampleFormat[sampleIndex] : 1;
     var bitsPerSample = this.fileDirectory.BitsPerSample[sampleIndex];
     return arrayForType(format, bitsPerSample, size);
@@ -4975,7 +4981,7 @@ var toArray = function toArray(input) {
 var metadata_defaults = [["Compression", 1], //no compression
 ["PlanarConfiguration", 1], ["XPosition", 0], ["YPosition", 0], ["ResolutionUnit", 1], // Code 1 for actual pixel count or 2 for pixels per inch.
 ["ExtraSamples", 0], ["GeoAsciiParams", "WGS 84\0"], ["ModelTiepoint", [0, 0, 0, -180, 90, 0]], // raster fits whole globe
-["SampleFormat", 1], ["GTModelTypeGeoKey", 2], ["GTRasterTypeGeoKey", 1], ["GeographicTypeGeoKey", 4326], ["GeogCitationGeoKey", "WGS 84"]];
+["GTModelTypeGeoKey", 2], ["GTRasterTypeGeoKey", 1], ["GeographicTypeGeoKey", 4326], ["GeogCitationGeoKey", "WGS 84"]];
 
 var write_geotiff = function write_geotiff(data, metadata) {
 
@@ -5051,6 +5057,12 @@ var write_geotiff = function write_geotiff(data, metadata) {
 		metadata.ModelPixelScale = [360 / width, 180 / height, 0];
 	}
 
+	if (!metadata.SampleFormat) {
+		metadata.SampleFormat = times(number_of_bands, function (i) {
+			return 1;
+		});
+	}
+
 	var geoKeys = Object.keys(metadata).filter(function (key) {
 		return endsWith(key, "GeoKey");
 	}).sort(function (a, b) {
@@ -5098,7 +5110,7 @@ var write_geotiff = function write_geotiff(data, metadata) {
 	}
 
 	["Compression", "ExtraSamples", "GeographicTypeGeoKey", "GTModelTypeGeoKey", "GTRasterTypeGeoKey", "ImageLength", // synonym of ImageHeight
-	"ImageWidth", "PhotometricInterpretation", "PlanarConfiguration", "ResolutionUnit", "SampleFormat", "SamplesPerPixel", "XPosition", "YPosition"].forEach(function (name) {
+	"ImageWidth", "PhotometricInterpretation", "PlanarConfiguration", "ResolutionUnit", "SamplesPerPixel", "XPosition", "YPosition"].forEach(function (name) {
 		if (metadata[name]) {
 			metadata[name] = toArray(metadata[name]);
 		}

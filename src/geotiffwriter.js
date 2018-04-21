@@ -325,7 +325,6 @@ var metadata_defaults = [
 	[ "ExtraSamples", 0 ],
 	[ "GeoAsciiParams", "WGS 84\u0000" ],
 	[ "ModelTiepoint", [0, 0, 0, -180, 90, 0] ], // raster fits whole globe
-	[ "SampleFormat",  1 ],
 	[ "GTModelTypeGeoKey", 2 ],
 	[ "GTRasterTypeGeoKey", 1 ],
 	[ "GeographicTypeGeoKey", 4326 ],
@@ -405,6 +404,10 @@ var write_geotiff = function (data, metadata) {
 		metadata.ModelPixelScale = [360 / width, 180 / height, 0];
 	}
 
+	if (!metadata.SampleFormat) {
+		metadata.SampleFormat = times(number_of_bands, function(i) { return 1; });
+	}
+
 
 	var geoKeys = Object.keys(metadata)
 	.filter(function(key) {
@@ -465,7 +468,6 @@ var write_geotiff = function (data, metadata) {
 		"PhotometricInterpretation",
 		"PlanarConfiguration",
 		"ResolutionUnit",
-		"SampleFormat",
 		"SamplesPerPixel",
 		"XPosition",
 		"YPosition"
