@@ -10,15 +10,15 @@
 
 var globals = require("./globals.js");
 
-var _ = require("lodash");
-console.log("_:", _);
-var assign = _.assign;
-var endsWith = _.endsWith;
-var forEach = _.forEach;
-var invert = _.invert;
-var times = _.times;
+var utils = require("./utils");
+var assign = utils.assign;
+var endsWith = utils.endsWith;
+var forEach = utils.forEach;
+var invert = utils.invert;
+var times = utils.times;
 
 var code2typeName = globals.fieldTagTypes;
+
 var tagName2Code = invert(globals.fieldTagNames);
 var geoKeyName2Code = invert(globals.geoKeyNames);
 
@@ -317,7 +317,7 @@ var toArray = function (input) {
 };
 
 var write_geotiff = function (data, metadata) {
-
+	
 	var isFlattened = typeof data[0] === 'number';
 
 	var height;
