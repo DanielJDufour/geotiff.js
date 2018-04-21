@@ -21764,12 +21764,11 @@ module.exports = GeoTIFFImage;
 var globals = require("./globals.js");
 
 var _ = require("lodash");
+console.log("_:", _);
 var assign = _.assign;
 var endsWith = _.endsWith;
-var isUndefined = _.isUndefined;
 var forEach = _.forEach;
 var invert = _.invert;
-var map = _.map;
 var times = _.times;
 
 var code2typeName = globals.fieldTagTypes;
@@ -21784,14 +21783,6 @@ var typeName2byte = invert(globals.fieldTypeNames);
 
 //config variables
 var num_bytes_in_ifd = 1000;
-
-var stringify = function stringify(obj) {
-	if (obj.length) {
-		return JSON.stringify(map(obj));
-	} else {
-		return JSON.stringify(obj);
-	}
-};
 
 var _binBE = {
 	nextZero: function nextZero(data, o) {
