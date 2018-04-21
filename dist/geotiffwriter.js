@@ -371,6 +371,7 @@ var write_geotiff = function write_geotiff(data, metadata) {
 		// we are only writing one strip
 		metadata.StripByteCounts = [number_of_bands * height * width];
 	}
+	console.log("metadata.StripByteCounts:", metadata.StripByteCounts);
 
 	if (!metadata.ModelPixelScale) {
 		// assumes raster takes up exactly the whole globe
