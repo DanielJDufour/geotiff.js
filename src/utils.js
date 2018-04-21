@@ -7,6 +7,15 @@ var assign = function(target, source) {
 	}
 };
 
+var chunk = function(iterable, length) {
+    var results = [];
+    var length_of_iterable = iterable.length;
+    for (var i = 0; i < length_of_iterable; i+=length) {
+        results.push(iterable.slice(i, i + length));
+    }
+    return results;
+};
+
 var endsWith = function(string, expected_ending) {
 	if (string.length < expected_ending.length) {
 		return false;
@@ -34,6 +43,14 @@ var invert = function(old_obj) {
 	return new_obj;
 };
 
+var range = function(n) {
+    var results = [];
+    for (var i = 0; i < n; i++) {
+        results.push(i);
+    }
+    return results;
+};
+
 var times = function(times, func) {
     var results = [];
     for (var i = 0; i < times; i++){
@@ -42,10 +59,22 @@ var times = function(times, func) {
     return results;
 };
 
+var toArray = function(iterable) {
+    var results = [];
+    var length = iterable.length;
+    for (var i = 0; i < length; i++) {
+        results.push(iterable[i]);
+    }
+    return results;
+};
+
 module.exports = {
   assign: assign,
+  chunk: chunk,
   endsWith: endsWith,
   forEach: forEach,
   invert: invert,
-  times: times
+  range: range,
+  times: times,
+  toArray: toArray,
 };

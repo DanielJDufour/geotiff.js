@@ -1,9 +1,10 @@
 var chai = require("chai");
 var expect = chai.expect;
 
-var _ = require("lodash");
-var flattenDeep = _.flattenDeep;
-var chunk = _.chunk;
+var utils = require("../src/utils.js");
+var chunk = utils.chunk;
+var toArray = utils.toArray;
+var range = utils.range;
 
 var Promise = require('es6-promise').Promise;
 
@@ -41,7 +42,7 @@ var retrieveSync = function(filename, done, callback) {
 
 var toArrayRecursively = function(input) {
   if (input.length) {
-    return _.toArray(input).map(toArrayRecursively);
+    return toArray(input).map(toArrayRecursively);
   }
   else {
     return input;
@@ -643,8 +644,8 @@ it("should write pixel values and metadata with sensible defaults", function() {
     var new_geotiff = GeoTIFF.parse(new_geotiff_as_binary_data);
 
     var new_values = new_geotiff.getImage().readRasters();
-    var new_values_reshaped = _.toArray(new_values).map(function(band) {
-      return chunk(_.toArray(band), width);
+    var new_values_reshaped = toArray(new_values).map(function(band) {
+      return chunk(toArray(band), width);
     });
 
     expect(JSON.stringify(new_values_reshaped.slice(0,-1))).to.equal(JSON.stringify(original_values.slice(0,-1)));
@@ -657,7 +658,7 @@ it("should write pixel values and metadata with sensible defaults", function() {
 
     var height = 12;
     var width = 12;
-    var original_values = _.range(height * width);
+    var original_values = range(height * width);
 
     var metadata = getMockMetaData(height, width);
 

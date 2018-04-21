@@ -5655,54 +5655,83 @@ module.exports = {
 "use strict";
 
 var assign = function assign(target, source) {
-	for (var key in source) {
-		if (source.hasOwnProperty(key)) {
-			target[key] = source[key];
-		}
-	}
+  for (var key in source) {
+    if (source.hasOwnProperty(key)) {
+      target[key] = source[key];
+    }
+  }
+};
+
+var chunk = function chunk(iterable, length) {
+  var results = [];
+  var length_of_iterable = iterable.length;
+  for (var i = 0; i < length_of_iterable; i += length) {
+    results.push(iterable.slice(i, i + length));
+  }
+  return results;
 };
 
 var endsWith = function endsWith(string, expected_ending) {
-	if (string.length < expected_ending.length) {
-		return false;
-	} else {
-		var actual_ending = string.substr(string.length - expected_ending.length);
-		return actual_ending === expected_ending;
-	}
+  if (string.length < expected_ending.length) {
+    return false;
+  } else {
+    var actual_ending = string.substr(string.length - expected_ending.length);
+    return actual_ending === expected_ending;
+  }
 };
 
 var forEach = function forEach(iterable, func) {
-	var length = iterable.length;
-	for (var i = 0; i < length; i++) {
-		func(iterable[i], i);
-	}
+  var length = iterable.length;
+  for (var i = 0; i < length; i++) {
+    func(iterable[i], i);
+  }
 };
 
 var invert = function invert(old_obj) {
-	var new_obj = {};
-	for (var key in old_obj) {
-		if (old_obj.hasOwnProperty(key)) {
-			var value = old_obj[key];
-			new_obj[value] = key;
-		}
-	}
-	return new_obj;
+  var new_obj = {};
+  for (var key in old_obj) {
+    if (old_obj.hasOwnProperty(key)) {
+      var value = old_obj[key];
+      new_obj[value] = key;
+    }
+  }
+  return new_obj;
+};
+
+var range = function range(n) {
+  var results = [];
+  for (var i = 0; i < n; i++) {
+    results.push(i);
+  }
+  return results;
 };
 
 var times = function times(_times, func) {
-	var results = [];
-	for (var i = 0; i < _times; i++) {
-		results.push(func(i));
-	}
-	return results;
+  var results = [];
+  for (var i = 0; i < _times; i++) {
+    results.push(func(i));
+  }
+  return results;
+};
+
+var toArray = function toArray(iterable) {
+  var results = [];
+  var length = iterable.length;
+  for (var i = 0; i < length; i++) {
+    results.push(iterable[i]);
+  }
+  return results;
 };
 
 module.exports = {
-	assign: assign,
-	endsWith: endsWith,
-	forEach: forEach,
-	invert: invert,
-	times: times
+  assign: assign,
+  chunk: chunk,
+  endsWith: endsWith,
+  forEach: forEach,
+  invert: invert,
+  range: range,
+  times: times,
+  toArray: toArray
 };
 
 },{}]},{},[23]);
