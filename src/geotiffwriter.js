@@ -316,6 +316,22 @@ var toArray = function (input) {
 	}
 };
 
+var metadata_defaults = [
+	[ "Compression", 1 ], //no compression
+	[ "PlanarConfiguration", 1 ],
+	[ "XPosition", 0 ],
+	[ "YPosition", 0 ],
+	[ "ResolutionUnit", 1 ], // Code 1 for actual pixel count or 2 for pixels per inch.
+	[ "ExtraSamples", 0 ],
+	[ "GeoAsciiParams", "WGS 84\u0000" ],
+	[ "ModelTiepoint", [0, 0, 0, -180, 90, 0] ], // raster fits whole globe
+	[ "SampleFormat",  1 ],
+	[ "GTModelTypeGeoKey", 2 ],
+	[ "GTRasterTypeGeoKey", 1 ],
+	[ "GeographicTypeGeoKey", 4326 ],
+	[ "GeogCitationGeoKey", "WGS 84"]
+];
+
 var write_geotiff = function (data, metadata) {
 	
 	var isFlattened = typeof data[0] === 'number';
@@ -356,9 +372,13 @@ var write_geotiff = function (data, metadata) {
 		metadata.BitsPerSample = times(number_of_bands, function (i) { return 8; });
 	}
 
-	if (!metadata.Compression) {
-		metadata.Compression = [1]; //no compression
-	}
+	metadata_defaults.forEach(tag => {
+		var key = tag[0];
+		if (!metadata[key]) {
+			var value = tag[1];			
+			metadata[key] = value;
+		}
+	});
 
 	// The color space of the image data.
 	// 1=black is zero and 2=RGB. 
@@ -380,59 +400,9 @@ var write_geotiff = function (data, metadata) {
 		metadata.StripByteCounts = [height * width];
 	}
 
-	if (!metadata.PlanarConfiguration) {
-		metadata.PlanarConfiguration = [1]; //no compression
-	}
-	if (!metadata.XPosition) {
-		metadata.XPosition = [0];
-	}
-	if (!metadata.YPosition) {
-		metadata.YPosition = [0];
-	}
-
-	// Code 1 for actual pixel count or 2 for pixels per inch.
-	if (!metadata.ResolutionUnit) {
-		metadata.ResolutionUnit = [1];
-	}
-
-
-	// For example, full-color RGB data normally has SamplesPerPixel=3. If SamplesPerPixel is greater than 3, then the ExtraSamples field describes the meaning of the extra samples. If SamplesPerPixel is, say, 5 then ExtraSamples will contain 2 values, one for each extra sample. ExtraSamples is typically used to include non-color information, such as opacity, in an image. The possible values for each item in the field's value are:
-	if (!metadata.ExtraSamples) {
-		metadata.ExtraSamples = [0];
-	}
-	
-	if (!metadata.GeoAsciiParams) {
-    	metadata.GeoAsciiParams = "WGS 84\u0000";
-	}
-	
 	if (!metadata.ModelPixelScale) {
 		// assumes raster takes up exactly the whole globe
 		metadata.ModelPixelScale = [360 / width, 180 / height, 0];
-	}
-
-	if (!metadata.ModelTiepoint) {
-		// assumes raster takes up exactly the whole globe
-		metadata.ModelTiepoint = [0, 0, 0, -180, 90, 0];
-	}
-	
-	if (!metadata.SampleFormat) {
-		metadata.SampleFormat = [1];
-	}
-
-	if (!metadata.GTModelTypeGeoKey) {
-		metadata.GTModelTypeGeoKey = 2;
-	}
-
-	if (!metadata.GTRasterTypeGeoKey) {
-		metadata.GTRasterTypeGeoKey = 1;
-	}
-
-	if (!metadata.GeographicTypeGeoKey) {
-		metadata.GeographicTypeGeoKey = 4326;
-	}
-	
-	if (!metadata.GeogCitationGeoKey) {
-		metadata.GeogCitationGeoKey = "WGS 84";
 	}
 
 	[
@@ -446,6 +416,7 @@ var write_geotiff = function (data, metadata) {
 		"PhotometricInterpretation",
 		"PlanarConfiguration",
 		"ResolutionUnit",
+		"SampleFormat",
 		"SamplesPerPixel",
 		"XPosition",
 		"YPosition"
