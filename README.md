@@ -264,6 +264,13 @@ a reasonable support, the following is implemented:
     cause problems for some compression algorithms if those arrays are used for
     pixel values.
 
+## Writing GeoTIFFs
+You can write GeoTIFFs by calling the create function.  You can specify
+
+Here are some more examples:
+ - Create a Single-Band GeoTIFF: https://beta.observablehq.com/@danieljdufour/create-geotiff
+ - Create a RGB 3-Band GeoTIFF: 
+
 ## Planned stuff:
 
   * Better support of geospatial parameters:

@@ -249,21 +249,11 @@ var encodeImage = function (values, width, height, metadata) {
 	}
 
 	var ifd = {
-		256: [width],
-		257: [height],
-		258: [8, 8, 8, 8],
-		259: [1],
-		262: [2],
+		256: [width], // ImageWidth
+		257: [height], // ImageLength
 		273: [num_bytes_in_ifd], // strips offset
-		277: [4],
-		278: [height],
-		/* rows per strip */
-		279: [width * height * 4], // strip byte counts
-		284: [1],
-		286: [0],
-		287: [0],
-		305: "geotiff.js", // no array for ASCII(Z)
-		338: [1]
+		278: [height], // RowsPerStrip
+		305: "geotiff.js" // no array for ASCII(Z)
 	};
 
 	if (metadata) {
@@ -322,7 +312,7 @@ var metadata_defaults = [
 	[ "XPosition", 0 ],
 	[ "YPosition", 0 ],
 	[ "ResolutionUnit", 1 ], // Code 1 for actual pixel count or 2 for pixels per inch.
-	[ "ExtraSamples", 0 ],
+	[ "ExtraSamples", 0 ], // should this be an array??
 	[ "GeoAsciiParams", "WGS 84\u0000" ],
 	[ "ModelTiepoint", [0, 0, 0, -180, 90, 0] ], // raster fits whole globe
 	[ "GTModelTypeGeoKey", 2 ],
@@ -396,7 +386,8 @@ var write_geotiff = function (data, metadata) {
 	//metadata.RowsPerStrip = toArray(metadata.RowsPerStrip);
 
 	if (!metadata.StripByteCounts) {
-		metadata.StripByteCounts = [height * width];
+		// we are only writing one strip
+		metadata.StripByteCounts = [number_of_bands * height * width];
 	}
 
 	if (!metadata.ModelPixelScale) {

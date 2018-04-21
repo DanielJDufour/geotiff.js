@@ -11,7 +11,11 @@ var chunk = function(iterable, length) {
     var results = [];
     var length_of_iterable = iterable.length;
     for (var i = 0; i < length_of_iterable; i+=length) {
-        results.push(iterable.slice(i, i + length));
+				var chunk = [];
+				for (var ci = i; ci < i + length; ci++) {
+					chunk.push(iterable[ci]);
+				}
+				results.push(chunk);
     }
     return results;
 };
