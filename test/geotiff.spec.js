@@ -586,6 +586,13 @@ it("should write pixel values and metadata with sensible defaults", function() {
 
     expect(JSON.stringify(new_values.slice(0,-1))).to.equal(JSON.stringify(original_values.slice(0,-1)));
 
+    var geoKeys = new_geotiff.getImage().getGeoKeys();
+    expect(geoKeys).to.be.an("object");
+    expect(geoKeys.GTModelTypeGeoKey).to.equal(2);
+    expect(geoKeys.GTRasterTypeGeoKey).to.equal(1);
+    expect(geoKeys.GeographicTypeGeoKey).to.equal(4326);
+    expect(geoKeys.GeogCitationGeoKey).to.equal('WGS 84');
+
     var fileDirectory = new_geotiff.fileDirectories[0][0];
     expect(normalize(fileDirectory.BitsPerSample)).to.equal(normalize([8]));
     expect(fileDirectory.Compression).to.equal(1);
@@ -601,7 +608,6 @@ it("should write pixel values and metadata with sensible defaults", function() {
     expect(fileDirectory.SamplesPerPixel).to.equal(1);
     expect(normalize(fileDirectory.RowsPerStrip)).to.equal(normalize(3));
     expect(normalize(fileDirectory.StripByteCounts)).to.equal(normalize(metadata.StripByteCounts));
-
 
   });
 

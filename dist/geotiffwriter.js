@@ -1,6 +1,6 @@
 'use strict';
 
-/* 
+/*
 	Some parts of this file are based on UTIF.js,
 	which was released under the MIT License.
 	You can view that here:
@@ -16,7 +16,7 @@ var forEach = utils.forEach;
 var invert = utils.invert;
 var times = utils.times;
 
-var code2typeName = globals.fieldTagTypes;
+var fieldTagTypes = globals.fieldTagTypes;
 
 var tagName2Code = invert(globals.fieldTagNames);
 var geoKeyName2Code = invert(globals.geoKeyNames);
@@ -121,7 +121,7 @@ var _writeIFD = function _writeIFD(bin, data, offset, ifd) {
 
 		var tag = typeof key === "number" ? key : typeof key === "string" ? parseInt(key) : null;
 
-		var typeName = code2typeName[tag];
+		var typeName = fieldTagTypes[tag];
 		var typeNum = typeName2byte[typeName];
 
 		if (typeName == null || typeName === undefined || typeof typeName === "undefined") {
@@ -224,7 +224,7 @@ var encode_ifds = function encode_ifds(ifds) {
 	if (data.slice) {
 		return data.slice(0, ifdo).buffer;
 	} else {
-		// node hasn't implemented slice on Uint8Array yet 
+		// node hasn't implemented slice on Uint8Array yet
 		var result = new Uint8Array(ifdo);
 		for (var i = 0; i < ifdo; i++) {
 			result[i] = data[i];
@@ -306,6 +306,11 @@ var toArray = function toArray(input) {
 	}
 };
 
+var metadata_defaults = [["Compression", 1], //no compression
+["PlanarConfiguration", 1], ["XPosition", 0], ["YPosition", 0], ["ResolutionUnit", 1], // Code 1 for actual pixel count or 2 for pixels per inch.
+["ExtraSamples", 0], ["GeoAsciiParams", "WGS 84\0"], ["ModelTiepoint", [0, 0, 0, -180, 90, 0]], // raster fits whole globe
+["SampleFormat", 1], ["GTModelTypeGeoKey", 2], ["GTRasterTypeGeoKey", 1], ["GeographicTypeGeoKey", 4326], ["GeogCitationGeoKey", "WGS 84"]];
+
 var write_geotiff = function write_geotiff(data, metadata) {
 
 	var isFlattened = typeof data[0] === 'number';
@@ -347,12 +352,16 @@ var write_geotiff = function write_geotiff(data, metadata) {
 		});
 	}
 
-	if (!metadata.Compression) {
-		metadata.Compression = [1]; //no compression
-	}
+	metadata_defaults.forEach(function (tag) {
+		var key = tag[0];
+		if (!metadata[key]) {
+			var value = tag[1];
+			metadata[key] = value;
+		}
+	});
 
 	// The color space of the image data.
-	// 1=black is zero and 2=RGB. 
+	// 1=black is zero and 2=RGB.
 	if (!metadata.PhotometricInterpretation) {
 		metadata.PhotometricInterpretation = metadata.BitsPerSample.length === 3 ? 2 : 1;
 	}
@@ -371,62 +380,59 @@ var write_geotiff = function write_geotiff(data, metadata) {
 		metadata.StripByteCounts = [height * width];
 	}
 
-	if (!metadata.PlanarConfiguration) {
-		metadata.PlanarConfiguration = [1]; //no compression
-	}
-	if (!metadata.XPosition) {
-		metadata.XPosition = [0];
-	}
-	if (!metadata.YPosition) {
-		metadata.YPosition = [0];
-	}
-
-	// Code 1 for actual pixel count or 2 for pixels per inch.
-	if (!metadata.ResolutionUnit) {
-		metadata.ResolutionUnit = [1];
-	}
-
-	// For example, full-color RGB data normally has SamplesPerPixel=3. If SamplesPerPixel is greater than 3, then the ExtraSamples field describes the meaning of the extra samples. If SamplesPerPixel is, say, 5 then ExtraSamples will contain 2 values, one for each extra sample. ExtraSamples is typically used to include non-color information, such as opacity, in an image. The possible values for each item in the field's value are:
-	if (!metadata.ExtraSamples) {
-		metadata.ExtraSamples = [0];
-	}
-
-	if (!metadata.GeoAsciiParams) {
-		metadata.GeoAsciiParams = "WGS 84\0";
-	}
-
 	if (!metadata.ModelPixelScale) {
 		// assumes raster takes up exactly the whole globe
 		metadata.ModelPixelScale = [360 / width, 180 / height, 0];
 	}
 
-	if (!metadata.ModelTiepoint) {
-		// assumes raster takes up exactly the whole globe
-		metadata.ModelTiepoint = [0, 0, 0, -180, 90, 0];
+	var geoKeys = Object.keys(metadata).filter(function (key) {
+		return endsWith(key, "GeoKey");
+	}).sort(function (a, b) {
+		return name2code[a] - name2code[b];
+	});
+
+	if (!metadata.GeoKeyDirectory) {
+		// Header={KeyDirectoryVersion, KeyRevision, MinorRevision, NumberOfKeys}
+		//     "GeoKeyDirectory": [1, 1, 0, 5, 1024, 0, 1, 2, 1025, 0, 1, 1, 2048, 0, 1, 4326, 2049, 34737, 7, 0, 2054, 0, 1, 9102],
+		var KeyDirectoryVersion = 1;
+		var KeyRevision = 1;
+		var MinorRevision = 0;
+
+		var NumberOfKeys = geoKeys.length;
+
+		var GeoKeyDirectory = [1, 1, 0, NumberOfKeys];
+		geoKeys.forEach(function (geoKey) {
+			var KeyID = Number(name2code[geoKey]);
+			GeoKeyDirectory.push(KeyID);
+
+			var Count;
+			var TIFFTagLocation;
+			var Value_Offset;
+			if (fieldTagTypes[KeyID] === "SHORT") {
+				Count = 1;
+				TIFFTagLocation = 0;
+				Value_Offset = metadata[geoKey];
+			} else if (geoKey === "GeogCitationGeoKey") {
+				Count = metadata.GeoAsciiParams.length;
+				TIFFTagLocation = Number(name2code.GeoAsciiParams);
+				Value_Offset = 0;
+			} else {
+				console.log("[geotiff.js] couldn't get TIFFTagLocation for " + geoKey);
+			}
+			GeoKeyDirectory.push(TIFFTagLocation);
+			GeoKeyDirectory.push(Count);
+			GeoKeyDirectory.push(Value_Offset);
+		});
+		metadata.GeoKeyDirectory = GeoKeyDirectory;
 	}
 
-	if (!metadata.SampleFormat) {
-		metadata.SampleFormat = [1];
-	}
-
-	if (!metadata.GTModelTypeGeoKey) {
-		metadata.GTModelTypeGeoKey = 2;
-	}
-
-	if (!metadata.GTRasterTypeGeoKey) {
-		metadata.GTRasterTypeGeoKey = 1;
-	}
-
-	if (!metadata.GeographicTypeGeoKey) {
-		metadata.GeographicTypeGeoKey = 4326;
-	}
-
-	if (!metadata.GeogCitationGeoKey) {
-		metadata.GeogCitationGeoKey = "WGS 84";
+	// delete GeoKeys from metadata, because stored in GeoKeyDirectory tag
+	for (var geoKey in geoKeys) {
+		delete metadata[geoKey];
 	}
 
 	["Compression", "ExtraSamples", "GeographicTypeGeoKey", "GTModelTypeGeoKey", "GTRasterTypeGeoKey", "ImageLength", // synonym of ImageHeight
-	"ImageWidth", "PhotometricInterpretation", "PlanarConfiguration", "ResolutionUnit", "SamplesPerPixel", "XPosition", "YPosition"].forEach(function (name) {
+	"ImageWidth", "PhotometricInterpretation", "PlanarConfiguration", "ResolutionUnit", "SampleFormat", "SamplesPerPixel", "XPosition", "YPosition"].forEach(function (name) {
 		if (metadata[name]) {
 			metadata[name] = toArray(metadata[name]);
 		}

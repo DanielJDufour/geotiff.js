@@ -1,6 +1,6 @@
 'use strict';
 
-/* 
+/*
 	Some parts of this file are based on UTIF.js,
 	which was released under the MIT License.
 	You can view that here:
@@ -17,7 +17,7 @@ var forEach = utils.forEach;
 var invert = utils.invert;
 var times = utils.times;
 
-var code2typeName = globals.fieldTagTypes;
+var fieldTagTypes = globals.fieldTagTypes;
 
 var tagName2Code = invert(globals.fieldTagNames);
 var geoKeyName2Code = invert(globals.geoKeyNames);
@@ -120,7 +120,7 @@ var _writeIFD = function (bin, data, offset, ifd) {
 
 		var tag = typeof key === "number" ? key : typeof key === "string" ? parseInt(key) : null;
 
-		var typeName = code2typeName[tag];
+		var typeName = fieldTagTypes[tag];
 		var typeNum = typeName2byte[typeName];
 
 		if (typeName == null || typeName === undefined || typeof typeName === "undefined") {
@@ -229,7 +229,7 @@ var encode_ifds = function (ifds) {
 		return data.slice(0, ifdo).buffer;
 	}
 	else {
-		// node hasn't implemented slice on Uint8Array yet 
+		// node hasn't implemented slice on Uint8Array yet
 		var result = new Uint8Array(ifdo);
 		for (var i = 0; i < ifdo; i++) {
 			result[i] = data[i];
@@ -333,7 +333,7 @@ var metadata_defaults = [
 ];
 
 var write_geotiff = function (data, metadata) {
-	
+
 	var isFlattened = typeof data[0] === 'number';
 
 	var height;
@@ -344,7 +344,7 @@ var write_geotiff = function (data, metadata) {
 	if (isFlattened) {
 		height = metadata.height || metadata.ImageLength;
 		width = metadata.width || metadata.ImageWidth;
-		number_of_bands = data.length / (height * width);	
+		number_of_bands = data.length / (height * width);
 		flattenedValues = data;
 	}
 	else {
@@ -375,13 +375,13 @@ var write_geotiff = function (data, metadata) {
 	metadata_defaults.forEach(tag => {
 		var key = tag[0];
 		if (!metadata[key]) {
-			var value = tag[1];			
+			var value = tag[1];
 			metadata[key] = value;
 		}
 	});
 
 	// The color space of the image data.
-	// 1=black is zero and 2=RGB. 
+	// 1=black is zero and 2=RGB.
 	if (!metadata.PhotometricInterpretation) {
 		metadata.PhotometricInterpretation = metadata.BitsPerSample.length === 3 ? 2 : 1;
 	}
@@ -403,6 +403,55 @@ var write_geotiff = function (data, metadata) {
 	if (!metadata.ModelPixelScale) {
 		// assumes raster takes up exactly the whole globe
 		metadata.ModelPixelScale = [360 / width, 180 / height, 0];
+	}
+
+
+	var geoKeys = Object.keys(metadata)
+	.filter(function(key) {
+		return endsWith(key, "GeoKey");
+	})
+	.sort(function(a, b) {
+		return name2code[a] - name2code[b];
+	});
+
+	if (!metadata.GeoKeyDirectory) {
+		// Header={KeyDirectoryVersion, KeyRevision, MinorRevision, NumberOfKeys}
+		//     "GeoKeyDirectory": [1, 1, 0, 5, 1024, 0, 1, 2, 1025, 0, 1, 1, 2048, 0, 1, 4326, 2049, 34737, 7, 0, 2054, 0, 1, 9102],
+		var KeyDirectoryVersion = 1;
+		var KeyRevision = 1;
+		var MinorRevision = 0;
+
+		var NumberOfKeys = geoKeys.length;
+
+		var GeoKeyDirectory = [ 1, 1, 0, NumberOfKeys ];
+		geoKeys.forEach(function(geoKey) {
+			var KeyID = Number(name2code[geoKey]);
+			GeoKeyDirectory.push(KeyID);
+
+			var Count;
+			var TIFFTagLocation;
+			var Value_Offset;
+			if (fieldTagTypes[KeyID] === "SHORT") {
+				Count = 1;
+				TIFFTagLocation = 0;
+				Value_Offset = metadata[geoKey];
+			} else if (geoKey === "GeogCitationGeoKey") {
+				Count = metadata.GeoAsciiParams.length;
+				TIFFTagLocation = Number(name2code.GeoAsciiParams);
+				Value_Offset = 0;
+			} else {
+				console.log("[geotiff.js] couldn't get TIFFTagLocation for " + geoKey);
+			}
+			GeoKeyDirectory.push(TIFFTagLocation);
+			GeoKeyDirectory.push(Count);
+			GeoKeyDirectory.push(Value_Offset);
+		});
+		metadata.GeoKeyDirectory = GeoKeyDirectory;
+	}
+
+	// delete GeoKeys from metadata, because stored in GeoKeyDirectory tag
+	for (var geoKey in geoKeys) {
+		delete metadata[geoKey];
 	}
 
 	[
