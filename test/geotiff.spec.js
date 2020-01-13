@@ -172,6 +172,29 @@ describe('RGB-tests', () => {
   });
 });
 
+describe('RGBA-tests', () => {
+  const options = { window: [250, 250, 300, 300], interleave: true };
+  const comparisonRaster = (async () => {
+    const tiff = await GeoTIFF.fromSource(createSource('RGBA.tiff'));
+    const image = await tiff.getImage();
+    return image.readRasters(options);
+  })();
+  options.enableAlpha = true;
+  process.stdout.write(JSON.stringify(options));
+  // TODO: disabled, as in CI environment such images are not similar enough
+  // it('should work with CMYK files', async () => {
+  //   const tiff = await GeoTIFF.fromSource(createSource('cmyk.tif'));
+  //   await performRGBTest(tiff, options, comparisonRaster, 1);
+  // });
+
+  it('should work with RGBA files', async () => {
+    const tiff = await GeoTIFF.fromSource(createSource('RGBA.tiff'));
+    await performRGBTest(tiff, options, comparisonRaster, 3);
+  });
+
+
+});
+
 describe('Geo metadata tests', async () => {
   it('should be able to get the origin and offset of images using tie points and scale', async () => {
     const tiff = await GeoTIFF.fromSource(createSource('stripped.tiff'));
@@ -189,6 +212,16 @@ describe('Geo metadata tests', async () => {
     expect(image.getBoundingBox()).to.be.an('array');
     expect(image.getGeoKeys()).to.have.property('GeographicTypeGeoKey');
     expect(image.getGeoKeys().GeographicTypeGeoKey).to.equal(4326);
+  });
+
+  it('should get GDAL Metadata', async () => {
+    const tiff = await GeoTIFF.fromSource(createSource('stats.tiff'));
+    const image = await tiff.getImage();
+    const metadata = image.getGDALMetadata(0);
+    expect(metadata.STATISTICS_MAXIMUM).to.equal('65507');
+    expect(metadata.STATISTICS_MEAN).to.equal('4463.0531697257');
+    expect(metadata.STATISTICS_MINIMUM).to.equal('0');
+    expect(metadata.STATISTICS_STDDEV).to.equal('5846.4047263122');
   });
 });
 
@@ -319,7 +352,7 @@ describe("writeTests", function() {
     const newGeoTiff = await fromArrayBuffer(newGeoTiffAsBinaryData);
 
     const image = await newGeoTiff.getImage();
-    const rasters = await image.readRasters();    
+    const rasters = await image.readRasters();
 
     const newValues = toArrayRecursively(rasters[0]);
 
