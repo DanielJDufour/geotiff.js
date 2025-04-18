@@ -314,7 +314,7 @@
     
 
     
-    <h4 class="name" id="getBoundingBox"><span class="type-signature"></span>getBoundingBox<span class="signature">()</span><span class="type-signature"> &rarr; {Array.&lt;number>}</span></h4>
+    <h4 class="name" id="getBoundingBox"><span class="type-signature"></span>getBoundingBox<span class="signature">(tilegrid<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Array.&lt;number>}</span></h4>
     
 
     
@@ -333,6 +333,76 @@ exception is thrown.</p>
 
 
 
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>tilegrid</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    false
+                
+                </td>
+            
+
+            <td class="description last"><p>If true return extent for a tilegrid
+without adjustment for ModelTransformation.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
 
 
 
@@ -368,7 +438,7 @@ exception is thrown.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="geotiffimage.js.html">geotiffimage.js</a>, <a href="geotiffimage.js.html#line891">line 891</a>
+        <a href="geotiffimage.js.html">geotiffimage.js</a>, <a href="geotiffimage.js.html#line906">line 906</a>
     </li></ul></dd>
     
 
@@ -770,7 +840,7 @@ Otherwise only metadata specific to the provided sample will be returned.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="geotiffimage.js.html">geotiffimage.js</a>, <a href="geotiffimage.js.html#line779">line 779</a>
+        <a href="geotiffimage.js.html">geotiffimage.js</a>, <a href="geotiffimage.js.html#line784">line 784</a>
     </li></ul></dd>
     
 
@@ -876,7 +946,7 @@ Otherwise only metadata specific to the provided sample will be returned.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="geotiffimage.js.html">geotiffimage.js</a>, <a href="geotiffimage.js.html#line805">line 805</a>
+        <a href="geotiffimage.js.html">geotiffimage.js</a>, <a href="geotiffimage.js.html#line810">line 810</a>
     </li></ul></dd>
     
 
@@ -1206,7 +1276,7 @@ transformation, then an exception is thrown.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="geotiffimage.js.html">geotiffimage.js</a>, <a href="geotiffimage.js.html#line818">line 818</a>
+        <a href="geotiffimage.js.html">geotiffimage.js</a>, <a href="geotiffimage.js.html#line823">line 823</a>
     </li></ul></dd>
     
 
@@ -1388,7 +1458,7 @@ required tags on its own.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="geotiffimage.js.html">geotiffimage.js</a>, <a href="geotiffimage.js.html#line846">line 846</a>
+        <a href="geotiffimage.js.html">geotiffimage.js</a>, <a href="geotiffimage.js.html#line851">line 851</a>
     </li></ul></dd>
     
 
@@ -1608,7 +1678,7 @@ required tags on its own.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="geotiffimage.js.html">geotiffimage.js</a>, <a href="geotiffimage.js.html#line751">line 751</a>
+        <a href="geotiffimage.js.html">geotiffimage.js</a>, <a href="geotiffimage.js.html#line756">line 756</a>
     </li></ul></dd>
     
 
@@ -1772,7 +1842,7 @@ required tags on its own.</p></td>
     
 
     
-    <h4 class="name" id="getTileOrStrip"><span class="type-signature">(async) </span>getTileOrStrip<span class="signature">(x, y, sample, poolOrDecoder, signal<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Promise.&lt;ArrayBuffer>}</span></h4>
+    <h4 class="name" id="getTileOrStrip"><span class="type-signature">(async) </span>getTileOrStrip<span class="signature">(x, y, sample, poolOrDecoder, signal<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Promise.&lt;{x: number, y: number, sample: number, data: ArrayBuffer}>}</span></h4>
     
 
     
@@ -2041,6 +2111,10 @@ to be aborted</p></td>
 <h5>Returns:</h5>
 
         
+<div class="param-desc">
+    <p>the decoded strip or tile</p>
+</div>
+
 
 
 <dl>
@@ -2049,7 +2123,7 @@ to be aborted</p></td>
     </dt>
     <dd>
         
-<span class="param-type">Promise.&lt;ArrayBuffer></span>
+<span class="param-type">Promise.&lt;{x: number, y: number, sample: number, data: ArrayBuffer}></span>
 
 
     </dd>
@@ -2339,7 +2413,7 @@ to be aborted</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="geotiffimage.js.html">geotiffimage.js</a>, <a href="geotiffimage.js.html#line881">line 881</a>
+        <a href="geotiffimage.js.html">geotiffimage.js</a>, <a href="geotiffimage.js.html#line894">line 894</a>
     </li></ul></dd>
     
 
@@ -2521,7 +2595,7 @@ of the raster is read for each sample.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="geotiffimage.js.html">geotiffimage.js</a>, <a href="geotiffimage.js.html#line560">line 560</a>
+        <a href="geotiffimage.js.html">geotiffimage.js</a>, <a href="geotiffimage.js.html#line565">line 565</a>
     </li></ul></dd>
     
 
@@ -3036,7 +3110,7 @@ to be aborted</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="geotiffimage.js.html">geotiffimage.js</a>, <a href="geotiffimage.js.html#line641">line 641</a>
+        <a href="geotiffimage.js.html">geotiffimage.js</a>, <a href="geotiffimage.js.html#line646">line 646</a>
     </li></ul></dd>
     
 
@@ -3104,13 +3178,13 @@ to be aborted</p></td>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-geotiff.html">geotiff</a></li><li><a href="module-geotiffimage.html">geotiffimage</a></li><li><a href="module-pool.html">pool</a></li><li><a href="module-resample.html">resample</a></li></ul><h3>Classes</h3><ul><li><a href="ArrayBufferSource.html">ArrayBufferSource</a></li><li><a href="BaseClient.html">BaseClient</a></li><li><a href="BaseResponse.html">BaseResponse</a></li><li><a href="BaseSource.html">BaseSource</a></li><li><a href="Block.html">Block</a></li><li><a href="BlockedSource.html">BlockedSource</a></li><li><a href="BlockedSource_BlockedSource.html">BlockedSource</a></li><li><a href="BlockGroup.html">BlockGroup</a></li><li><a href="CustomAggregateError.html">CustomAggregateError</a></li><li><a href="DummyLogger.html">DummyLogger</a></li><li><a href="FetchClient.html">FetchClient</a></li><li><a href="FetchResponse.html">FetchResponse</a></li><li><a href="FileReaderSource.html">FileReaderSource</a></li><li><a href="FileSource.html">FileSource</a></li><li><a href="HttpClient.html">HttpClient</a></li><li><a href="HttpResponse.html">HttpResponse</a></li><li><a href="JpegStreamReader.html">JpegStreamReader</a></li><li><a href="module.exports.html">exports</a></li><li><a href="module-geotiffimage-GeoTIFFImage.html">GeoTIFFImage</a></li><li><a href="module-geotiff-GeoTIFF.html">GeoTIFF</a></li><li><a href="module-geotiff-GeoTIFFBase.html">GeoTIFFBase</a></li><li><a href="module-geotiff-GeoTIFFImageIndexError.html">GeoTIFFImageIndexError</a></li><li><a href="module-geotiff-ImageFileDirectory.html">ImageFileDirectory</a></li><li><a href="module-geotiff-MultiGeoTIFF.html">MultiGeoTIFF</a></li><li><a href="module-pool-Pool.html">Pool</a></li><li><a href="RemoteSource.html">RemoteSource</a></li><li><a href="XHRClient.html">XHRClient</a></li><li><a href="XHRResponse.html">XHRResponse</a></li></ul><h3>Global</h3><ul><li><a href="global.html#makeFileReaderSource">makeFileReaderSource</a></li><li><a href="global.html#makeRemoteSource">makeRemoteSource</a></li><li><a href="global.html#parseByteRanges">parseByteRanges</a></li><li><a href="global.html#parseContentRange">parseContentRange</a></li><li><a href="global.html#parseContentType">parseContentType</a></li><li><a href="global.html#parseHeaders">parseHeaders</a></li><li><a href="global.html#setLogger">setLogger</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-geotiff.html">geotiff</a></li><li><a href="module-geotiffimage.html">geotiffimage</a></li><li><a href="module-pool.html">pool</a></li><li><a href="module-resample.html">resample</a></li></ul><h3>Classes</h3><ul><li><a href="ArrayBufferSource.html">ArrayBufferSource</a></li><li><a href="BaseClient.html">BaseClient</a></li><li><a href="BaseResponse.html">BaseResponse</a></li><li><a href="BaseSource.html">BaseSource</a></li><li><a href="Block.html">Block</a></li><li><a href="BlockedSource.html">BlockedSource</a></li><li><a href="BlockedSource_BlockedSource.html">BlockedSource</a></li><li><a href="BlockGroup.html">BlockGroup</a></li><li><a href="CustomAggregateError.html">CustomAggregateError</a></li><li><a href="DummyLogger.html">DummyLogger</a></li><li><a href="FetchClient.html">FetchClient</a></li><li><a href="FetchResponse.html">FetchResponse</a></li><li><a href="FileReaderSource.html">FileReaderSource</a></li><li><a href="FileSource.html">FileSource</a></li><li><a href="HttpClient.html">HttpClient</a></li><li><a href="HttpResponse.html">HttpResponse</a></li><li><a href="JpegStreamReader.html">JpegStreamReader</a></li><li><a href="module.exports.html">exports</a></li><li><a href="module-geotiffimage-GeoTIFFImage.html">GeoTIFFImage</a></li><li><a href="module-geotiff-GeoTIFF.html">GeoTIFF</a></li><li><a href="module-geotiff-GeoTIFFBase.html">GeoTIFFBase</a></li><li><a href="module-geotiff-GeoTIFFImageIndexError.html">GeoTIFFImageIndexError</a></li><li><a href="module-geotiff-ImageFileDirectory.html">ImageFileDirectory</a></li><li><a href="module-geotiff-MultiGeoTIFF.html">MultiGeoTIFF</a></li><li><a href="module-pool-Pool.html">Pool</a></li><li><a href="RemoteSource.html">RemoteSource</a></li><li><a href="XHRClient.html">XHRClient</a></li><li><a href="XHRResponse.html">XHRResponse</a></li></ul><h3>Global</h3><ul><li><a href="global.html#makeFileReaderSource">makeFileReaderSource</a></li><li><a href="global.html#makeRemoteSource">makeRemoteSource</a></li><li><a href="global.html#parseByteRanges">parseByteRanges</a></li><li><a href="global.html#parseContentRange">parseContentRange</a></li><li><a href="global.html#parseContentType">parseContentType</a></li><li><a href="global.html#parseHeaders">parseHeaders</a></li><li><a href="global.html#registerTag">registerTag</a></li><li><a href="global.html#setLogger">setLogger</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Thu May 04 2023 13:30:11 GMT+0000 (Coordinated Universal Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Fri Apr 18 2025 20:58:21 GMT+0000 (Coordinated Universal Time)
 </footer>
 
 <script> prettyPrint(); </script>
